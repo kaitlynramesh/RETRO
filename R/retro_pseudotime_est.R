@@ -1,5 +1,7 @@
-# Pseudotime fitting function
-pseudotime_fit <- function(retro_pt_obj, retro_obj, h=0.5) {
+
+
+pseudotime_fit <- function(retro_pt_obj, retro_obj) {
+  
   # Obtain coordinates and lineage information 
   coordinates <- retro_pt_obj$Coordinates
   time <- retro_pt_obj$Time
@@ -214,7 +216,7 @@ projection_by_segment <- function(nl, coordinates, lineages, lin_membership, clu
     node_not_used = unique(lin_clusterLabels[!(lin_clusterLabels %in% id[l])]) # not in lineage
     node_labels = lin_clusterLabels
     
-    # f cluster label is not a part of lineage, map to existing node in lineage
+    # If cluster label is not a part of lineage, map to existing node in lineage
     if(!isempty(node_not_used)) {
       nodes_to_match = lin_id[-which(lin_id %in% node_not_used)] # nodes in final lineage
       if(isempty(nodes_to_match)) { nodes_to_match = lin_id }
@@ -296,10 +298,9 @@ projection_by_segment <- function(nl, coordinates, lineages, lin_membership, clu
     final_lambda <- unlist(sapply(projection, "[", 2))
     real_time <- time[which_cells]
     
-    x = list("final_lambda"=as.numeric(final_lambda),
-             "real_time"=real_time,
-             "which_cells"=which_cells)
-    res_all[[i]] = x
+    res_all[[i]] = list("final_lambda" = as.numeric(final_lambda),
+                        "real_time" = real_time,
+                        "which_cells" = which_cells)
   }
   return(res_all)
 }
