@@ -1,13 +1,5 @@
-#' @title Clustering functions in RETRO
-#' @description This function finds the cell that is closest to the centroid of its cluster.
-#'
-#' @param coordinates Matrix of cell coordinates with a time contribution
-#' obtained using the \code{weight_coord()} function.
-#' @param centroid List of K-means centroids of the coordinate clusters.
-#' @return The index of the closest cell to each centroid.
-#' @export
-#'
-#'
+#### Clustering functions ####
+
 find_nearest_cell <- function(centroid, coordinates) {
   dims = c(1,2,ncol(coordinates))
   centroid = centroid[dims]
@@ -19,11 +11,13 @@ find_nearest_cell <- function(centroid, coordinates) {
   return(nearest_idx)
 }
 
-#'
-#' @description This function is an adaptation of k-means that clusters coordinates
-#' and returns centroids that are from the original data
+#' @title Clustering strategy adapted from K-means.
+#' @description This function is an adaptation of k-means that maps K-means centroids
+#' in each cluster to the nearest cell from the original data.
 #'
 #' @param num_centers Determines number of clusters.
+#' @param coordinates Matrix of cell coordinates with a time contribution
+#' obtained using the \code{weight_coord()} function.
 #' @return A list containing the new cluster centroids \code{centers} and
 #' a vector of labels \code{clusterLabels} grouping the coordinates.
 #' @export
@@ -46,6 +40,7 @@ kmnn_cluster <- function(coordinates, num_centers) {
 }
 
 
+#' @title Re-cluster cells given a period
 #' @description This function re-clusters the cells if there is periodicity in their gene expression,
 #' causing clusters to contain multiple time points.
 #'
