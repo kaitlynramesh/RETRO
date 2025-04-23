@@ -1,5 +1,8 @@
 #### Distance and MST-related functions ####
 
+#' @import igraph
+#' @importFrom utils tail
+
 # Determine number of PCs that make up 90% variance
 num_pc <- function(pca) {
   n_pc <- 1:ncol(pca$x) # total pca
@@ -28,7 +31,8 @@ num_pc <- function(pca) {
 }
 
 
-
+#'
+#'
 #' @title Defining cell coordinates using gene expression and time
 #' @description This function concatenates weighted time points to PCA coordinates.
 #' @param time Vector of sampling time points corresponding to each cell.
@@ -179,6 +183,8 @@ get_cluster_time <- function(clusterLabels, time, terminal_cells=NULL,
 
 
 
+#'
+#'
 #' @title Calculating the minimum spanning tree for trajectory inference
 #' @description This function uses RETRO functions \code{recluster()} and \code{get_cluster_time()} to figure out
 #' clustering and establish the initial and final nodes of the minimum spanning tree. It

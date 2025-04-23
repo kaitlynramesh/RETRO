@@ -27,7 +27,7 @@ connect_clus <- function(b, mstc) {
 }
 
 #' @import ggplot2
-#' @importFrom dplyr filter lag
+#' @importFrom dplyr group_by summarize mutate select
 #' @import tibble
 #'
 #' @title Boxplots to visualize score distribution
@@ -54,7 +54,7 @@ boxplot_scoring <- function(all_scores, num_scores, k) {
   rownames(score_df) <- 1:(num_scores * length(k))
   colnames(score_df) <- c('Score', 'K')
   score_df$K <- as.factor(score_df$K)
-  ggplot(score_df, aes(x=K, y=Score)) +
+  ggplot(score_df, aes(x=.data$K, y=.data$Score)) +
     geom_boxplot(fill='steelblue1') + ggtitle('MST Structure Error from Iterative K-Medoids Clustering') +
     theme_bw() +
     theme(axis.text=element_text(size=10),
@@ -65,35 +65,10 @@ boxplot_scoring <- function(all_scores, num_scores, k) {
 }
 
 
-# plot MST
-test_MST <- function(paths, medoids, coordinates, clusterLabels) {
-
-  center_coord <- data.frame(x=as.vector(medoids[,1]), y=as.vector(medoids[,2]))
-  colnames(center_coord) = c("x", "y")
-  colnames(coordinates) <- paste0('V', 1:ncol(coordinates))
-  title <- paste0('Num Paths: ', length(paths))
-
-  b <- ggplot(as.data.frame(center_coord), aes(x = x, y = y)) +
-    geom_point(data = as.data.frame(coordinates)[,1:2], aes(x = V1, y = V2, color = as.factor(clusterLabels)), size = 2) +
-    geom_point() +
-    ggtitle(label=title) +
-    theme_classic()
-
-  lineages <- vector(mode='list', length=length(paths))
-  names(lineages) <- paste(seq_len(length(paths)))
-  for (i in 1:length(paths)) {
-    lineages[[i]] <- paths[[i]]
-  }
-
-  lineages <- lapply(lineages, as.double)
-  mstc <- lapply(lineages, get_mst_coord, center_coord=center_coord) # Identifies MST coordinates per lineage
-  connect_clus(b, mstc)
-}
-
 
 #' @importFrom tidyr nest unnest
 #' @importFrom purrr map2
-#' @importFrom RColorBrewer brewer.pal
+#' @importFrom RColorBrewer brewer.pal colorRampPalette
 
 #' @title Pseudotime density plot
 #' @description This function creates a density plot of pseudotime that is grouped
@@ -105,65 +80,65 @@ test_MST <- function(paths, medoids, coordinates, clusterLabels) {
 #' @return A ggplot2 object showing the normalized density of pseudotime values grouped by sampling time.
 #' @export
 #'
-psupertime_density <- function(time, pseudotime, bw=0.5) {
-
-  x <- seq(length(time)) # number of cells
-  time <- as.numeric(time)
-  rownames(x) <- paste0('cell-', 1:nrow(x)) # cell ids
-  label_input = factor(time) # sampling time label
-
-  proj_dt <- list(cell_id = rownames(x),
-                  psuper = pseudotime,
-                  label_input = label_input)
-  proj_dt = as.data.frame(proj_dt)
-  n_labels <- length(unique(label_input))
-
-  if (n_labels <= 11) {
-    col_vals 	= rev(brewer.pal(n_labels, name='RdBu'))
-  } else {
-    col_pal <- rev(brewer.pal(11, 'RdBu'))
-    col_vals <- rev(colorRampPalette(col_pal)(n_labels))
-  }
-
-  bw_list = proj_dt %>%
-    group_by(label_input) %>%
-    summarize(bw = density(psuper)$bw)
-  bw_list$bw = rep(bw, length(unique(label_input)))
-
-  # (1) Table of custom bandwidths
-  bw_list <- proj_dt %>%
-    group_by(label_input) %>%
-    summarize(bw = bw, .groups = "drop")
-
-  # (2) Compute density per group from bandwidth list
-  dens_df <- proj_dt %>%
-    group_by(label_input) %>%
-    nest() %>%
-    left_join(bw_list, by = "label_input") %>%
-    mutate(
-      density_data = map2(data, bw, ~ {
-        d <- density(.x$psuper, bw = .y)
-        tibble(x = d$x, y = d$y / mean(d$y), label_input = .x$label_input[1])
-      })
-    ) %>%
-    select(label_input, density_data) %>%
-    unnest(density_data)
-
-  bw_list_new = as.data.frame(dens_df) %>%
-    group_by(label_input) %>%
-    summarize(bw = density(x)$bw)
-  # print(bw_list_new)
-
-  ggplot(dens_df, aes(x = x, y = y, color = label_input, fill = label_input)) +
-    geom_line() +
-    geom_area(alpha = 0.4, position = "identity") +
-    scale_colour_manual(values = col_vals) +
-    scale_fill_manual(values = col_vals) +
-    labs(
-      x = "Pseudotime",
-      y = "Density",
-      color = "Time",
-      fill = "Time"
-    )
-
-}
+# psupertime_density <- function(time, pseudotime, bw=0.5) {
+#
+#   x <- seq(length(time)) # number of cells
+#   time <- as.numeric(time)
+#   rownames(x) <- paste0('cell-', 1:nrow(x)) # cell ids
+#   label_input = factor(time) # sampling time label
+#
+#   proj_dt <- list(cell_id = rownames(x),
+#                   psuper = pseudotime,
+#                   label_input = label_input)
+#   proj_dt = as.data.frame(proj_dt)
+#   n_labels <- length(unique(label_input))
+#
+#   if (n_labels <= 11) {
+#     col_vals 	= rev(brewer.pal(n_labels, name='RdBu'))
+#   } else {
+#     col_pal <- rev(brewer.pal(11, 'RdBu'))
+#     col_vals <- rev(colorRampPalette(col_pal)(n_labels))
+#   }
+#
+#   bw_list = proj_dt %>%
+#     group_by(label_input) %>%
+#     summarize(bw = density(psuper)$bw)
+#   bw_list$bw = rep(bw, length(unique(label_input)))
+#
+#   # (1) Table of custom bandwidths
+#   bw_list <- proj_dt %>%
+#     group_by(label_input) %>%
+#     summarize(bw = bw, .groups = "drop")
+#
+#   # (2) Compute density per group from bandwidth list
+#   dens_df <- proj_dt %>%
+#     group_by(label_input) %>%
+#     nest() %>%
+#     left_join(bw_list, by = "label_input") %>%
+#     mutate(
+#       density_data = map2(data, bw, ~ {
+#         d <- density(.x$psuper, bw = .y)
+#         tibble(x = d$x, y = d$y / mean(d$y), label_input = .x$label_input[1])
+#       })
+#     ) %>%
+#     select(label_input, density_data) %>%
+#     unnest(density_data)
+#
+#   bw_list_new = as.data.frame(dens_df) %>%
+#     group_by(label_input) %>%
+#     summarize(bw = density(x)$bw)
+#   # print(bw_list_new)
+#
+#   ggplot(dens_df, aes(x = x, y = y, color = label_input, fill = label_input)) +
+#     geom_line() +
+#     geom_area(alpha = 0.4, position = "identity") +
+#     scale_colour_manual(values = col_vals) +
+#     scale_fill_manual(values = col_vals) +
+#     labs(
+#       x = "Pseudotime",
+#       y = "Density",
+#       color = "Time",
+#       fill = "Time"
+#     )
+#
+# }
