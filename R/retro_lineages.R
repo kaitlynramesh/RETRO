@@ -5,6 +5,10 @@
 #' @import scales
 #' @import stats
 #' @importFrom proxy dist
+#' @import bezier
+#' @importFrom cccd nng
+#' @importFrom cluster pam
+
 
 #' @title Create RETRO object
 #' @description This function stores all necessary information to carry out analysis with RETRO.
@@ -269,7 +273,6 @@ get_num_lineages <- function(retro_obj, percent=0.05, cutoff=0.8, threshold=0.10
 
 
 ### Bézier spline fitting functions ####
-#' @import bezier
 
 # Extension for Bézier curve to cover all points
 extend_centers <- function(centroids, p) {

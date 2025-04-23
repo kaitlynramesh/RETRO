@@ -2,6 +2,7 @@
 
 #' @import parallel
 #' @import doParallel
+#' @importFrom foreach %dopar%
 #' @import pracma
 #'
 #'
@@ -181,7 +182,7 @@ scoring <- function(coordinates, coordinates_uw, time, k, num_scores, num_cells,
                     threshold=0.10, period=period) {
   iteration <- foreach(i=1:num_scores, .combine='c') %dopar% {
 
-    m <- kmnn_cluster(coordinates = c1, num_centers = k)
+    m <- kmnn_cluster(coordinates = coordinates_uw, num_centers = k)
     iteration <- generate_paths(m, coordinates=coordinates, time=time,
                                 terminal_cells=terminal_cells,
                                 starting_cells=starting_cells, max_k=max_k,

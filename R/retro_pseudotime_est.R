@@ -2,6 +2,7 @@
 
 #' @import princurve
 #' @import MonoPoly
+#' @importFrom utils head tail
 #'
 #'
 #' @title Pseudotime fitting function
@@ -83,9 +84,9 @@ pseudotime_fit <- function(retro_pt_obj, retro_obj) {
                                        wc,
                                        curve_fit[,1])
 
-    g <- ggplot(as.data.frame(curve), aes(x=Arc_Length, y=Time)) +
+    g <- ggplot(as.data.frame(curve), aes(x=.data$Arc_Length, y=.data$Time)) +
       geom_point() +
-      geom_point(data=curve_fit, aes(x=x,y=y), col='lightgreen') +
+      geom_point(data=curve_fit, aes(x=.data$x,y=.data$y), col='lightgreen') +
       theme_bw() +
       theme(axis.text=element_text(size=10))
     graph_list[[i]] <- g
@@ -122,7 +123,7 @@ lambda_curve_fit <- function(lambda, real_time) {
   med_lambda = cbind(unlist(med_lambda), sort(rep(t, 3)))
 
   colnames(med_lambda) = c("x", "y")
-  f = monpol(y ~ x, data=as.data.frame(med_lambda), deg=3)
+  f = monpol(y ~ x, data=as.data.frame(med_lambda), degree=3)
   predicted_values <- predict(f, newdata = med_fitting)
 
   curve = data.frame(cbind(med_fitting[,1], predicted_values))

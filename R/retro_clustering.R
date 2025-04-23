@@ -23,7 +23,6 @@ find_nearest_cell <- function(centroid, coordinates) {
 #' @export
 #'
 #'
-# Clustering using K-means (but assigns centroid to nearest cell)
 kmnn_cluster <- function(coordinates, num_centers) {
   res = kmeans(coordinates, centers = num_centers)
   centroids = res$centers
