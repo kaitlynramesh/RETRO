@@ -3,7 +3,8 @@
 #' @import RColorBrewer
 #' @import ggplot2
 #' @import scales
-#' @import proxy
+#' @import stats
+#' @importFrom proxy dist
 
 #' @title Create RETRO object
 #' @description This function stores all necessary information to carry out analysis with RETRO.
