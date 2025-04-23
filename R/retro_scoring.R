@@ -3,7 +3,6 @@
 #' @import parallel
 #' @import doParallel
 #' @import pracma
-#' @import stats
 #'
 #'
 #' @title Infer and score MST
@@ -167,7 +166,7 @@ is.member <- function(edge, lineages) {
 #' @title Parallelization of MST generation and scoring
 #' @description This function is a wrapper for the \code{generate_paths()} function
 #' to parallelize iterative MST generation and scoring across the range of specified K clusters.
-#' It is recommended to run \scoring{()} in an lapply() to contain all
+#' It is recommended to run \code{scoring()} in an lapply() to contain all
 #' iterative clustering and scoring data in one .rda file.
 #'
 #' @param coordinates Coordinates determined by \code{weight_coord()} that include a contribution from sampling time.

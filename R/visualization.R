@@ -27,7 +27,7 @@ connect_clus <- function(b, mstc) {
 }
 
 #' @import ggplot2
-#' @import dplyr
+#' @importFrom dplyr filter lag
 #' @import tibble
 #'
 #' @title Boxplots to visualize score distribution
