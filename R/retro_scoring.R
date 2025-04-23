@@ -1,15 +1,20 @@
-library(cluster)
-library(pracma)
-library(stats)
-library(inflection)
-library(parallel)
-library(doParallel)
-library(SimilarityMeasures)
-library(Biobase)
-library(cccd)
-library(scales)
+#### MST generation and scoring functions ####
 
-# Iteratively generates MSTs and scores them based on distance metrics
+#' @import parallel
+#' @import doParallel
+#' @import pracma
+#' @import stats
+#'
+#'
+#' @title Infer and score MST
+#' @description This function is a wrapper for key RETRO functions, namely
+#' \code{create_dMST()} for MST inference and \code{av_cell_dist()} for MST scoring.
+#' It is iteratively called in the function \code{scoring()} to generate MSTs for
+#' coordinates clustered in a variety of ways.
+#' @return List containing the (1) MST scoring infomration from \code{av_cell_dist()}
+#' and (2) clustering.
+#' @export
+#'
 generate_paths <- function(kmedoids, time, coordinates, terminal_cells=NULL,
                            starting_cells=NULL, threshold=0.10,
                            max_k, start='Mode', period=NULL) {
@@ -21,13 +26,27 @@ generate_paths <- function(kmedoids, time, coordinates, terminal_cells=NULL,
   points <- coordinates[,1:3] # Obtain 2D coordinates for PC projection
   cell_dist <- av_cell_dist(cell_MST=cell_MST, clusterLabels=clusterLabels, points=points, time=time) # Calculate distance score
 
-  iteration <- list(cell_dist, kmedoids)
-
-  return(iteration)
+  return(list(cell_dist, kmedoids))
 }
 
 
-# Obtains average distance from cell to the lineages - generate_paths()
+#' @title Computes a distance-based score for each MST
+#' @description This function projects each cell to each lineage of the MST to gauge how well the
+#' MST covers the low-dimensional projection of data. It includes penalties based on whether all of the
+#' nodes are used, and if the initial and terminal nodes are consistent with the experimental sampling time.
+#'
+#' @param cell_MST List returned by \code{create_dMST()} containing MST-specific information, such as
+#' MST structure, starting/terminal nodes, etc.
+#' @param clusterLabels A membership vector for clustering the coordinates into groups.
+#' @param points Coordinates for each cell. For low-dimensional projections from PCA, these coordinates use
+#' the first 3 PC's and will have no time contribution. Note that if UMAP is used, there will be a time contribution as the first
+#' three dimensions are UMAP1, UMAP2, and the weighted time vector.
+#' @param time Vector of sampling time points corresponding to each cell.
+#' @return List containing the (1) number of lineages, (2) score, and a (3) binary membership matrix indicating
+#' which lineage the cell is closest to. This membership matrix will be used for detecting global lineages based on
+#' all MSTs.
+#' @export
+#'
 av_cell_dist <- function(cell_MST, clusterLabels, points, time) {
 
   mst <- cell_MST$MST
@@ -144,10 +163,23 @@ is.member <- function(edge, lineages) {
   return(mem)
 }
 
-### SCORING AND MST GENERATION ###
 
-# Scoring uses foreach/dopar to parallelize WITH PENALIZATION
-scoring <- function(coordinates, time, c1, k, num_scores, num_cells, terminal_cells=NULL, starting_cells=NULL, max_k, start='Average', threshold=0.10, period=period) {
+#' @title Parallelization of MST generation and scoring
+#' @description This function is a wrapper for the \code{generate_paths()} function
+#' to parallelize iterative MST generation and scoring across the range of specified K clusters.
+#' It is recommended to run \scoring{()} in an lapply() to contain all
+#' iterative clustering and scoring data in one .rda file.
+#'
+#' @param coordinates Coordinates determined by \code{weight_coord()} that include a contribution from sampling time.
+#' @param coordinates_uw Coordinates determined by \code{weight_coord()} that have an **optional** contribution from sampling time.
+#' It is recommended that these coordinates are un-weighted so that the initial clustering covers the entire low-dimensiona projection.
+#' @return List containing the (1) MST scoring infomration from \code{av_cell_dist()}
+#' and (2) clustering.
+#' @export
+#'
+scoring <- function(coordinates, coordinates_uw, time, k, num_scores, num_cells,
+                    terminal_cells=NULL, starting_cells=NULL, max_k, start='Average',
+                    threshold=0.10, period=period) {
   iteration <- foreach(i=1:num_scores, .combine='c') %dopar% {
 
     m <- kmnn_cluster(coordinates = c1, num_centers = k)

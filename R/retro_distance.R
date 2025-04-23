@@ -37,6 +37,7 @@ num_pc <- function(pca) {
 #' Default value is 1 (where PCA and time have an equal contribution). Increasing lambda will increase contribution from PCA.
 #' @return List containing weighted coordinates, PCA coordinates weighted by their variance,
 #' and the computed weight used to scale the time vector.
+#' @export
 #'
 pc_distance_function <- function(time,
                                  pca,

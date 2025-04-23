@@ -1,6 +1,22 @@
+#### Pseudotime estimation functions ####
 
-
-
+#' @import princurve
+#' @import MonoPoly
+#'
+#'
+#' @title Pseudotime fitting function
+#' @description This function uses lineage information from \code{retro_pt_obj} and
+#' MST-specific information from \code{retro_obj} to infer pseudotime values.
+#'
+#' @param retro_pt_obj Pseudotime-specific object from RETRO which contains consensus information
+#' across MSTs regarding the global number of lineages and cell membership to each lineage.
+#' @param retro_obj MST-specific object from RETRO containing information about the dataset
+#' and the optimal MST used in curve fitting.
+#' @return Updated list for \code{retro_pt_obj} where \code{retro_pt_obj[["Pseudotime"]]} stores RETRO pseudotime.
+#' Remaining arguments "Pseudotime_Mat", "Graph_List," and "Fitting" store intermediate steps from the
+#' pseudotime inference process.
+#' @export
+#'
 pseudotime_fit <- function(retro_pt_obj, retro_obj) {
 
   # Obtain coordinates and lineage information
@@ -94,6 +110,7 @@ pseudotime_fit <- function(retro_pt_obj, retro_obj) {
 }
 
 
+# Obtain curve between arc length and real time for pseudotime estimation
 lambda_curve_fit <- function(lambda, real_time) {
 
   med_fitting = as.data.frame(cbind(lambda, real_time))
@@ -114,16 +131,8 @@ lambda_curve_fit <- function(lambda, real_time) {
   return(curve)
 }
 
-scale_time <- function(time, pseudotime) {
-  or <- as.vector(range(pseudotime)) # original range
-  ar <- as.vector(range(time)) # actual range
-  scaled_pt <- lapply(pseudotime, function(p) ((((p-or[1])*(ar[2]-ar[1])) / (or[2]-or[1])) + ar[1]) )
-  scaled_pt <- unlist(scaled_pt)
-  return(scaled_pt)
-}
-
 # Create matrix of pseudotime values (1) if cell has >1 PT value and (2) to ensure that
-# correct pseudotime assigned to each cell
+# the correct pseudotime assigned to each cell
 populate_matrix <- function(max_cells, l, pt) {
   pseudotime_mat <- as.matrix(rep(NA, length=max_cells))
   for (i in 1:length(l)) {
@@ -204,7 +213,7 @@ get_mapped_cells <- function(retro_obj) {
   return(retro_pt_obj)
 }
 
-
+# Projects cells assigned to each MST segments (based on cluster labels) to each corresponding region of the curve
 projection_by_segment <- function(nl, coordinates, lineages, lin_membership, clusterLabels, id, arclengths, ext_bcurves) {
   res_all = vector(mode="list", length=nl) # initialize list for projection data
   for(i in 1:nl) {
