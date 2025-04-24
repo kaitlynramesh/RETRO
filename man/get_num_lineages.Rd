@@ -20,12 +20,12 @@ Note that this cutoff is scaled by number of clusters (K) / maximum number of cl
 \value{
 This function returns \code{retro_obj} with updated information regarding the optimal MST for pseudotime inference, as well
 as well as membership lists separating cells into their respective developmental lineages.
-(1) \code{retro_obj[["RETRO_MST"]]} stores MST-specific information outputted by \code{create_dMST()}.
-(2) \code{retro_obj[["Lineage]]} stores the list of lineages from the MST
-(3) \code{retro_obj[["Centers]]} stores the centers/graph nodes that compose the MST.
-(4) \code{retro_obj[["Num_Lineages"]]} stores the number of lineages.
-(5) \code{retro_obj[["Lin_Membership"]]} stores membership information (which cell corresponds to which lineage).
-(6) \code{retro_boj[["Cells_to_lin"]]} stores the corresponding coordinates separated by lineage membership.
+\if{html}{\out{<br>}}(1) \code{retro_obj[["RETRO_MST"]]} stores MST-specific information outputted by \code{create_dMST()}.
+\if{html}{\out{<br>}}(2) \code{retro_obj[["Lineage]]} stores the list of lineages from the MST
+\if{html}{\out{<br>}}(3) \code{retro_obj[["Centers]]} stores the centers/graph nodes that compose the MST.
+\if{html}{\out{<br>}}(4) \code{retro_obj[["Num_Lineages"]]} stores the number of lineages.
+\if{html}{\out{<br>}}(5) \code{retro_obj[["Lin_Membership"]]} stores membership information (which cell corresponds to which lineage).
+\if{html}{\out{<br>}}(6) \code{retro_boj[["Cells_to_lin"]]} stores the corresponding coordinates separated by lineage membership.
 number of lineages is stored in \code{retro_obj$Nul}
 }
 \description{

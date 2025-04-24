@@ -1,9 +1,11 @@
 #### MST generation and scoring functions ####
 
-#' @import parallel
-#' @import doParallel
-#' @importFrom foreach %dopar%
-#' @import pracma
+#' @importFrom parallel mclapply
+#' @importFrom doParallel registerDoParallel
+#' @importFrom parallel detectCores
+#' @importFrom foreach foreach %dopar%
+#' @importFrom pracma cross
+#' @importFrom igraph get.edgelist
 #'
 #'
 #' @title Infer and score MST
@@ -136,7 +138,7 @@ get_distance <- function(point, edges, center_coord) {
 
   i <- 1:nrow(edges)
   cell_dist <- unlist((lapply(i, check_alpha))) # Find distance between point and all edges
-  cell_dist <- diag(matrix(cell_dist, nrow=nrow(edges),ncol=nrow(edges),byrow=TRUE))
+  cell_dist <- diag(matrix(cell_dist, nrow=nrow(edges),ncol=nrow(edges), byrow=TRUE))
 
   closest_edge <- match(min(cell_dist), cell_dist)
 
@@ -155,7 +157,6 @@ is.member <- function(edge, lineages) {
   for (i in 1:n) {
     lineage <- unlist(lineages[[i]], use.names = FALSE)
     index <- match(edge, lineage)
-    # index <- tidyr::replace_na(index, 0)
     index[is.na(index)] <- 0
 
     mem[i]<-ifelse(abs(index[1]-index[2])==1, 1,0)

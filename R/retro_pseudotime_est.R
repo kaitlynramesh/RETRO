@@ -1,9 +1,11 @@
 #### Pseudotime estimation functions ####
 
-#' @import princurve
-#' @import MonoPoly
+#' @importFrom princurve project_to_curve
+#' @importFrom MonoPoly monpol
 #' @importFrom utils head tail
-#'
+#' @importFrom ggplot2 ggplot aes element_text geom_point theme theme_bw
+#' @importFrom stats quantile
+
 #'
 #' @title Pseudotime fitting function
 #' @description This function uses lineage information from \code{retro_pt_obj} and
@@ -56,6 +58,7 @@ pseudotime_fit <- function(retro_pt_obj, retro_obj) {
   # Project cells according to the corresponding MST segment
   projection_res = projection_by_segment(nl=nl,
                                          coordinates=coordinates,
+                                         time=time,
                                          lineages=lineages,
                                          lin_membership=lin_membership,
                                          clusterLabels=clusterLabels,
@@ -180,7 +183,7 @@ get_mapped_cells <- function(retro_obj) {
     nearest_node = lapply(unmatched_clusters, function(u) {
 
       p = coordinates[u,]
-      dist_mat = as.matrix(dist(rbind(p, coordinates[lin_ids,])))
+      dist_mat = as.matrix(stats::dist(rbind(p, coordinates[lin_ids,])))
       dist_mat = dist_mat[-1,]
       dist_vec = dist_mat[,1]
 
@@ -215,7 +218,7 @@ get_mapped_cells <- function(retro_obj) {
 }
 
 # Projects cells assigned to each MST segments (based on cluster labels) to each corresponding region of the curve
-projection_by_segment <- function(nl, coordinates, lineages, lin_membership, clusterLabels, id, arclengths, ext_bcurves) {
+projection_by_segment <- function(nl, coordinates, time, lineages, lin_membership, clusterLabels, id, arclengths, ext_bcurves) {
   res_all = vector(mode="list", length=nl) # initialize list for projection data
   for(i in 1:nl) {
     # Obtain cluster/nodes belonging to each lineage
@@ -236,7 +239,7 @@ projection_by_segment <- function(nl, coordinates, lineages, lin_membership, clu
         coord1 = cbind(coordinates[,1:2], time)[node,]
         coord2 = cbind(coordinates[,1:2], time)[nodes_to_match,]
 
-        dist_mat = as.matrix(dist(rbind(coord1, coord2)))
+        dist_mat = as.matrix(stats::dist(rbind(coord1, coord2)))
         dist_mat = dist_mat[-1,]
         closest_node = nodes_to_match[which.min(dist_mat[,1])] # closest node in lineage
         return(closest_node)
@@ -254,13 +257,13 @@ projection_by_segment <- function(nl, coordinates, lineages, lin_membership, clu
     edge_index <- apply(cbind(l[1:(length(l)-1)], l[-1]), 2, function(x) id[x])
 
     # Dimensions used for projection
-    dimensions = 1:2 # c(1:3) # c(1:2, ncol(coordinates))
+    dimensions = 1:2
 
     # Determine portion of curve corresponding to each edge
     curve_per_edge <- lapply(0:(nrow(edge_index)+1), function(j) {
       section <- seq( 1001*j, 1001*(j+1), 1) # 1001 (=seq(0,1,.001)) points per edge
 
-      curve_section <- ext_bcurves[[i]][section,dimensions] #1:2]
+      curve_section <- ext_bcurves[[i]][section, dimensions]
       return(curve_section)
     })
 
