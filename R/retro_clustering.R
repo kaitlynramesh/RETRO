@@ -1,11 +1,15 @@
 #### Clustering functions ####
 
+#' @importFrom stats dist kmeans density
+#'
+#'
+
 find_nearest_cell <- function(centroid, coordinates) {
   dims = c(1,2,ncol(coordinates))
   centroid = centroid[dims]
 
   distances = apply(coordinates[,dims], 1, function(row) {
-    return(as.numeric(dist(rbind(row, centroid)))) # use all dimensions!!
+    return(as.numeric(stats::dist(rbind(row, centroid)))) # use all dimensions!!
   })
   nearest_idx <- which.min(distances)
   return(nearest_idx)

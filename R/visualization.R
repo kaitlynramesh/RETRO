@@ -1,5 +1,15 @@
 #### Visualization and plotting functions ####
 
+#' @importFrom ggplot2 ggplot aes geom_boxplot ggtitle element_text geom_segment geom_line geom_area scale_colour_manual scale_fill_manual labs scale_y_continuous
+#' @importFrom dplyr group_by summarize mutate select tibble rowwise ungroup
+#' @importFrom tidyr nest unnest
+#' @importFrom purrr map2
+#' @importFrom RColorBrewer brewer.pal
+#' @importFrom grDevices colorRampPalette
+#' @importFrom rlang .data
+#' @importFrom magrittr %>%
+
+
 # Creates data frame of center coordinates (df) in order of MST
 get_mst_coord <- function(lineage, center_coord) {
   mstc <- data.frame()               # Start w/ empty data frame
@@ -26,9 +36,7 @@ connect_clus <- function(b, mstc) {
   return(b) # Graph of MST
 }
 
-#' @import ggplot2
-#' @importFrom dplyr group_by summarize mutate select
-#' @import tibble
+#'
 #'
 #' @title Boxplots to visualize score distribution
 #' @description This function plots a boxplot per K number of clusters to look at
@@ -65,11 +73,6 @@ boxplot_scoring <- function(all_scores, num_scores, k) {
 }
 
 
-
-#' @importFrom tidyr nest unnest
-#' @importFrom purrr map2
-#' @importFrom RColorBrewer brewer.pal colorRampPalette
-
 #' @title Pseudotime density plot
 #' @description This function creates a density plot of pseudotime that is grouped
 #' by discrete experimental time labels. This plot gives insight into whether the inferred
@@ -77,68 +80,85 @@ boxplot_scoring <- function(all_scores, num_scores, k) {
 #' @param time Vector of experimental sampling time assigned to each cell.
 #' @param pseudotime Vector of pseudotime estimates assigned to each cell.
 #' @param bw (optional) Density plot bandwidth. Default at 0.5.
+#' @param log1p (optional) Logical parameter to log-transformed normalized density values. Default is False.
 #' @return A ggplot2 object showing the normalized density of pseudotime values grouped by sampling time.
 #' @export
 #'
-# psupertime_density <- function(time, pseudotime, bw=0.5) {
-#
-#   x <- seq(length(time)) # number of cells
-#   time <- as.numeric(time)
-#   rownames(x) <- paste0('cell-', 1:nrow(x)) # cell ids
-#   label_input = factor(time) # sampling time label
-#
-#   proj_dt <- list(cell_id = rownames(x),
-#                   psuper = pseudotime,
-#                   label_input = label_input)
-#   proj_dt = as.data.frame(proj_dt)
-#   n_labels <- length(unique(label_input))
-#
-#   if (n_labels <= 11) {
-#     col_vals 	= rev(brewer.pal(n_labels, name='RdBu'))
-#   } else {
-#     col_pal <- rev(brewer.pal(11, 'RdBu'))
-#     col_vals <- rev(colorRampPalette(col_pal)(n_labels))
-#   }
-#
-#   bw_list = proj_dt %>%
-#     group_by(label_input) %>%
-#     summarize(bw = density(psuper)$bw)
-#   bw_list$bw = rep(bw, length(unique(label_input)))
-#
-#   # (1) Table of custom bandwidths
-#   bw_list <- proj_dt %>%
-#     group_by(label_input) %>%
-#     summarize(bw = bw, .groups = "drop")
-#
-#   # (2) Compute density per group from bandwidth list
-#   dens_df <- proj_dt %>%
-#     group_by(label_input) %>%
-#     nest() %>%
-#     left_join(bw_list, by = "label_input") %>%
-#     mutate(
-#       density_data = map2(data, bw, ~ {
-#         d <- density(.x$psuper, bw = .y)
-#         tibble(x = d$x, y = d$y / mean(d$y), label_input = .x$label_input[1])
-#       })
-#     ) %>%
-#     select(label_input, density_data) %>%
-#     unnest(density_data)
-#
-#   bw_list_new = as.data.frame(dens_df) %>%
-#     group_by(label_input) %>%
-#     summarize(bw = density(x)$bw)
-#   # print(bw_list_new)
-#
-#   ggplot(dens_df, aes(x = x, y = y, color = label_input, fill = label_input)) +
-#     geom_line() +
-#     geom_area(alpha = 0.4, position = "identity") +
-#     scale_colour_manual(values = col_vals) +
-#     scale_fill_manual(values = col_vals) +
-#     labs(
-#       x = "Pseudotime",
-#       y = "Density",
-#       color = "Time",
-#       fill = "Time"
-#     )
-#
-# }
+#'
+psupertime_density <- function(time, pseudotime, bw=0.5, log1p=F) {
+
+  time = as.numeric(time)
+  pseudotime = as.numeric(pseudotime)
+
+  label_input = factor(time) # sampling time label
+  proj_dt <- list(psuper = pseudotime,
+                  label_input = label_input)
+  proj_dt = as.data.frame(proj_dt)
+  n_labels <- length(unique(label_input))
+
+  if (n_labels <= 11) {
+    col_vals 	= rev(brewer.pal(n_labels, name='RdBu'))
+  } else {
+    col_pal <- rev(brewer.pal(11, 'RdBu'))
+    col_vals <- rev(colorRampPalette(col_pal)(n_labels))
+  }
+
+  # (1) Table of custom bandwidths
+  bw_list = proj_dt %>%
+    group_by(label_input) %>%
+    nest()
+  bw_list$bw = rep(bw, length(unique(label_input)))
+
+  # (2) Compute density per group from bandwidth list
+  dens_df <- bw_list %>%
+    group_by(label_input) %>%
+    mutate(
+      density_data = map2(.data$data, bw, ~ {
+        d <- density(.x$psuper, bw = .y)
+        tibble(x = d$x, y = d$y / mean(d$y))
+      })
+    )
+
+  # (3) Obtain internally calculated BW
+  dens_df <- dens_df %>%
+    rowwise() %>%
+    mutate(bw_uw = density(unlist(.data$density_data[[2]]))$bw) %>%
+    ungroup()
+  print(dens_df$bw_uw)
+
+  # (4) Order density plot based on real time labels
+  dens_df_all = dens_df[order(dens_df$label_input),] # order density peak information
+  uni_time = as.character(sort(unique(time))) # order of time-points
+  names(col_vals) = uni_time
+  density_obj = ggplot() # initialize ggplot object
+
+  # (5) Plotting
+  for (i in seq(uni_time)) {
+    density_df = dens_df_all[[4]][[i]]
+    density_df = cbind(density_df, uni_time[i]) # distribution per time-point
+    colnames(density_df) = c("x", "y", "label_input")
+    density_df = as.data.frame(density_df)
+
+    density_obj = density_obj +
+      geom_area(alpha=0.5,
+                data = density_df,
+                aes(x = .data$x, y = .data$y,
+                    fill = .data$label_input, colour = .data$label_input))
+  }
+
+  density_obj = density_obj +
+    scale_colour_manual(breaks=uni_time, values = col_vals) +
+    scale_fill_manual(breaks=uni_time, values = col_vals) +
+    labs(
+      x = "Pseudotime",
+      y = "Normalized Density",
+      color = "Time",
+      fill = "Time"
+    )
+
+  if(log1p=="T") {
+    density_obj = density_obj + scale_y_continuous(trans = 'log1p') + labs(y="Log-normalized Density")
+  }
+
+  density_obj
+}
