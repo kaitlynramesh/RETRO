@@ -4,6 +4,7 @@
 #' @importFrom utils tail
 #' @importFrom stats lm predict dist median
 #' @importFrom pracma Mode isempty
+#' @import proxy
 #'
 
 # Determine number of PCs that make up 90% variance
@@ -53,7 +54,7 @@ pc_distance_function <- function(time,
   time = as.integer(factor(time))
 
   # Time distance matrix to calculate mean time between cells
-  tmat <- stats::dist(time) # Euclidean
+  tmat <- proxy::dist(time) # Euclidean
   tmat <- as.matrix(tmat)
   tmat <- tmat**2 # difference squared
   mean_t <- mean(as.numeric(tmat))
@@ -70,7 +71,7 @@ pc_distance_function <- function(time,
   rownames(pc_weighted) <- rownames(pca$x[,1:n_pc])
 
   # PCA distance matrix to calculate median distance between PC values
-  pc_mat <- as.matrix(stats::dist(pc_weighted))
+  pc_mat <- as.matrix(proxy::dist(pc_weighted))
   pc_mat <- pc_mat**2
   median_pc <- median(as.numeric((pc_mat)))
 
@@ -193,33 +194,30 @@ get_cluster_time <- function(clusterLabels, time, terminal_cells=NULL,
 #' clustering and establish the initial and final nodes of the minimum spanning tree. It
 #' depends on functions from the \code{igraph} package for most graph-based calculations.
 #'
-#' @param coordinates Matrix of cell coordinates with a time contribution
-#' obtained using the \code{weight_coord()} function.
-#' @param kmnn Cluster centroids and labels obtained from \code{kmnn_cluster()}.
-#' @param time Vector of sampling time points corresponding to each cell.
-#' @param start Character parameter that is either "Average" or "Mode." If "Average,"
-#' the starting node is assigned to the cluster with the lowest average sampling time.
-#' If "Mode," the starting node is assigned the cluster with the greatest representation of the lowest sampling time-point.
-#' "Mode" is recommended for determining the starting node.
-#' @param period Specifies the minimum difference in time where one can expect the cells
-#' to return to an earlier state gene expression (make a cycle).
-#' @return List of trajectory information, which is as follows: minimum spanning tree object (MST),
+#' @param retro_obj RETRO meta object
+#' @param kmedoids Cluster centroids and labels obtained from \code{kmnn_cluster()}.
+#' @return List of MST trajectory information: minimum spanning tree object (MST),
 #' starting and terminal nodes (Start, Terminal), constituent lineages inferred (Lineages),
 #' cluster labels for cell coordinates (clusterLabels), node IDs (ID),
 #' MST edge cutoff based on time (Dt), and a logical value for whether the cells were reclustered (Reclus)
 #' @export
 #'
-create_dMST <- function(coordinates, kmnn, time,
-                        terminal_cells=NULL, starting_cells=NULL,
-                        threshold=0.10, max_k,
-                        start=NULL, period=NULL) {
+create_dMST <- function(retro_obj, kmedoids) {
+
+  coordinates = retro_obj@coordinates
+  time = retro_obj@time
+  terminal_cells = retro_obj@terminal_cells
+  starting_cells = retro_obj@starting_cells
+  start = retro_obj@start
+  threshold = retro_obj@threshold
+  period = retro_obj@period
 
   # Identify cluster centroids
-  clusterLabels <- kmnn[["clustering"]]
+  clusterLabels <- kmedoids[["clustering"]]
   reclustered <- FALSE
 
   if(!isempty(period)) {
-    reclustering <- recluster(kmnn, time, coordinates, period=period)
+    reclustering <- recluster(kmedoids, time, coordinates, period)
     clusterLabels <- reclustering[[1]]
     dt <- reclustering[[2]]
     period <- reclustering[[3]] # unchanged unless no separation
@@ -227,6 +225,7 @@ create_dMST <- function(coordinates, kmnn, time,
   }
 
   # Obtain average time point per cluster
+  max_k = max(retro_obj@k_range) # Maximum number of clusters analyzed
   time_stats <- get_cluster_time(clusterLabels, time, terminal_cells,
                                  starting_cells, threshold=threshold, max_k)
   av_time <- time_stats[[1]]
@@ -252,7 +251,7 @@ create_dMST <- function(coordinates, kmnn, time,
   terminal.clus <- which(id %in% time_stats$Terminal_ID)
 
   # Distance matrix for cluster centers
-  mat <- as.matrix(stats::dist(medoids))
+  mat <- as.matrix(proxy::dist(medoids))
   rownames(mat) <- colnames(mat) <- 1:length(id)
 
   # Set up for minimum spanning tree
@@ -341,15 +340,18 @@ create_dMST <- function(coordinates, kmnn, time,
     path_list[[i]] <- paths[[i]]
   }
 
-  return(list('MST' = mst,
-              'Start' = id[start.clus],
-              'Lineages' = path_list,
-              'ID' = id,
-              'Terminal' = id[terminal.clus],
-              'ClusterLabels'=clusterLabels,
-              'AvTime'=av_time,
-              'Dt'=dt,
-              'Reclus'=reclustered))
+  cell_MST <- list('MST' = mst,
+                   'Start' = id[start.clus],
+                   'Lineages' = path_list,
+                   'ID' = id,
+                   'Terminal' = id[terminal.clus],
+                   'ClusterLabels'=clusterLabels,
+                   'AvTime'=av_time,
+                   'Dt'=dt,
+                   'Reclus'=reclustered)
+
+  retro_obj@RETRO_MST = cell_MST
+  return(retro_obj)
 }
 
 

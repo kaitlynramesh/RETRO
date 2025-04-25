@@ -1,0 +1,35 @@
+---
+title: "RETRO Tutorial"
+author: "Kaitlyn Ramesh"
+date: "`r Sys.Date"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Load Data
+```{r}
+load("~/KaitlynRRStudio/RETRO/data/scd_bifurcation.rda")
+
+library(RETRO)
+```
+
+```{r}
+
+
+
+```
+
+
+
+
+

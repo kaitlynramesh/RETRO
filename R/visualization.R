@@ -47,7 +47,7 @@ connect_clus <- function(b, mstc) {
 #' is organized by the corresponding K clusters used. The length of the list should be
 #' number of K clusters used, \code{length(k)}, and each list element should be the length \code{num_scores}.
 #' The list contains the scores and structures of each MST determined.
-#' @param num_scores Number of MSTs (scored MSTs) per clustering. Default is 100.
+#' @param num_scores Number of MSTs (scored MSTs) per clustering.
 #' @param k Range of clusters used for RETRO pseudotime analysis.
 #' @return A ggplot2 object for a set of boxplots of scores per K clusters
 #' to show the effect of clustering on MST inference.
