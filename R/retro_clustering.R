@@ -1,7 +1,7 @@
 #### Clustering functions ####
 
-#' @importFrom stats dist kmeans density
-#'
+#' @importFrom stats kmeans density
+#' @import proxy
 #'
 
 find_nearest_cell <- function(centroid, coordinates) {
@@ -9,7 +9,7 @@ find_nearest_cell <- function(centroid, coordinates) {
   centroid = centroid[dims]
 
   distances = apply(coordinates[,dims], 1, function(row) {
-    return(as.numeric(stats::dist(rbind(row, centroid)))) # use all dimensions!!
+    return(as.numeric(proxy::dist(rbind(row, centroid)))) # use all dimensions!!
   })
   nearest_idx <- which.min(distances)
   return(nearest_idx)
@@ -48,6 +48,9 @@ kmnn_cluster <- function(coordinates, num_centers) {
 #' causing clusters to contain multiple time points.
 #'
 #' @param kmnn Initial cluster centroids and labels from \code{kmnn_cluster()}.
+#' @param time Vector of sampling time points corresponding to each cell.
+#' @param coordinates Matrix of cell coordinates with a time contribution
+#' obtained using the \code{weight_coord()} function.
 #' @param period Specifies the minimum difference in time where one can expect the cells
 #' to return to an earlier state gene expression (make a cycle).
 #' @return A list containing an updated membership vector \code{clusterLabels} following re-clustering,

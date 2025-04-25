@@ -9,6 +9,11 @@ recluster(kmnn, time, coordinates, period)
 \arguments{
 \item{kmnn}{Initial cluster centroids and labels from \code{kmnn_cluster()}.}
 
+\item{time}{Vector of sampling time points corresponding to each cell.}
+
+\item{coordinates}{Matrix of cell coordinates with a time contribution
+obtained using the \code{weight_coord()} function.}
+
 \item{period}{Specifies the minimum difference in time where one can expect the cells
 to return to an earlier state gene expression (make a cycle).}
 }

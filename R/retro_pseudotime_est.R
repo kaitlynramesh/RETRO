@@ -5,36 +5,34 @@
 #' @importFrom utils head tail
 #' @importFrom ggplot2 ggplot aes element_text geom_point theme theme_bw
 #' @importFrom stats quantile
+#' @import proxy
 
 #'
 #' @title Pseudotime fitting function
-#' @description This function uses lineage information from \code{retro_pt_obj} and
-#' MST-specific information from \code{retro_obj} to infer pseudotime values.
+#' @description This function uses lineage information from the optimal MST
+#' to infer pseudotime values.
 #'
-#' @param retro_pt_obj Pseudotime-specific object from RETRO which contains consensus information
-#' across MSTs regarding the global number of lineages and cell membership to each lineage.
 #' @param retro_obj MST-specific object from RETRO containing information about the dataset
 #' and the optimal MST used in curve fitting.
-#' @return Updated list for \code{retro_pt_obj} where \code{retro_pt_obj[["Pseudotime"]]} stores RETRO pseudotime.
-#' Remaining arguments "Pseudotime_Mat", "Graph_List," and "Fitting" store intermediate steps from the
-#' pseudotime inference process.
+#' @return Updated elements in \code{retro_obj} to store RETRO pseudotime in \code{pseudotime}
+#' and intermediate fitting processes in \code{pseudotime_graph}.
 #' @export
 #'
-pseudotime_fit <- function(retro_pt_obj, retro_obj) {
+pseudotime_fit <- function(retro_obj) {
 
   # Obtain coordinates and lineage information
-  coordinates <- retro_pt_obj$Coordinates
-  time <- retro_pt_obj$Time
-  cells_to_lin <- retro_pt_obj$Cells_to_Lin
-  lin_membership <- retro_pt_obj$Lin_Membership
-  nl <- retro_pt_obj$Num_Lineages
+  coordinates <- retro_obj@coordinates
+  time <- retro_obj@time
+  cells_to_lin <- retro_obj@cells_to_lin
+  lin_membership <- retro_obj@lin_membership
+  nl <- retro_obj@num_lineages
 
   # Extract MST specifics
-  cell_MST <- retro_obj$RETRO_MST
-  id <- cell_MST$ID
-  lineages <- cell_MST$Lineages
-  clusterLabels <- cell_MST$ClusterLabels
-  reclus <- cell_MST$Reclus
+  cell_MST <- retro_obj@RETRO_MST
+  id <- cell_MST[["ID"]]
+  lineages <- cell_MST[["Lineages"]]
+  clusterLabels <- cell_MST[["ClusterLabels"]]
+  reclus <- cell_MST[["Reclus"]]
 
   # Initialize lists for storage
   pseudotime_list <- vector(mode='list', length=nl)
@@ -43,8 +41,8 @@ pseudotime_fit <- function(retro_pt_obj, retro_obj) {
   graph_list <- vector(mode='list', length=nl)
 
   # Obtain curve and arc length information
-  ext_bcurves <- sapply(retro_pt_obj$Curve, "[", 1)
-  arclengths <- sapply(retro_pt_obj$Curve, "[", 4)
+  ext_bcurves <- sapply(retro_obj@RETRO_Curve, "[", 1)
+  arclengths <- sapply(retro_obj@RETRO_Curve, "[", 4)
 
   # Initialize lists for storage
   pseudotime_list <- vector(mode='list', length=nl)
@@ -52,8 +50,9 @@ pseudotime_fit <- function(retro_pt_obj, retro_obj) {
   graph_list <- vector(mode='list', length=nl)
 
   # Obtain curve and arc length information
-  ext_bcurves <- sapply(retro_pt_obj$Curve, "[", 1)
-  arclengths <- sapply(retro_pt_obj$Curve, "[", 4)
+  retro_curve = retro_obj@RETRO_Curve
+  ext_bcurves <- sapply(retro_curve, "[", 1)
+  arclengths <- sapply(retro_curve, "[", 4)
 
   # Project cells according to the corresponding MST segment
   projection_res = projection_by_segment(nl=nl,
@@ -105,12 +104,12 @@ pseudotime_fit <- function(retro_pt_obj, retro_obj) {
     pseudotime <- pseudotime_list[[1]]
   }
 
-  retro_pt_obj$Pseudotime <- pseudotime
-  retro_pt_obj$Pseudotime_Mat = pseudotime_mat
-  retro_pt_obj$Graph_List <- graph_list
-  retro_pt_obj$Fitting <- lambda_list
+  retro_obj@pseudotime_graph = graph_list
+  retro_obj@pseudotime = pseudotime
+  # retro_pt_obj$Pseudotime_Mat = pseudotime_mat
+  # retro_pt_obj$Fitting <- lambda_list
 
-  return(retro_pt_obj)
+  return(retro_obj)
 }
 
 
@@ -148,14 +147,16 @@ populate_matrix <- function(max_cells, l, pt) {
 # Update lineage information such that EVERY cell maps to a lineage
 get_mapped_cells <- function(retro_obj) {
 
-  coordinates <- retro_obj$Coordinates
-  time <- retro_obj$Time
-  lin_membership <- retro_obj$Lin_Membership
-  cells_to_lin <- retro_obj$Cells_to_Lin
-  cell_MST <- retro_obj$RETRO_MST
-  clusterLabels <- cell_MST$ClusterLabels # for node to lineage consistency
-  lineages <- cell_MST$Lineages
-  id = cell_MST$ID
+  coordinates <- retro_obj@coordinates
+  time <- retro_obj@time
+  lin_membership <- retro_obj@lin_membership
+  cells_to_lin <- retro_obj@cells_to_lin
+
+  # Optimal MST nodes, clusters, and lineages are used for mapping
+  cell_MST <- retro_obj@RETRO_MST
+  clusterLabels <- cell_MST[["ClusterLabels"]] # for node to lineage consistency
+  lineages <- cell_MST[["Lineages"]]
+  id = cell_MST[["ID"]]
 
   # Identify the cells that don't belong to a lineage
   total_cells <- 1:nrow(coordinates)
@@ -183,7 +184,7 @@ get_mapped_cells <- function(retro_obj) {
     nearest_node = lapply(unmatched_clusters, function(u) {
 
       p = coordinates[u,]
-      dist_mat = as.matrix(stats::dist(rbind(p, coordinates[lin_ids,])))
+      dist_mat = as.matrix(proxy::dist(rbind(p, coordinates[lin_ids,])))
       dist_mat = dist_mat[-1,]
       dist_vec = dist_mat[,1]
 
@@ -206,19 +207,16 @@ get_mapped_cells <- function(retro_obj) {
     final_cells_to_lin <- lapply(final_lin_mem, function(x) coordinates[x,])
   }
 
-  # Initialize pseudotime object
-  retro_pt_obj <- retro_obj
-  retro_pt_obj$Lin_Membership <- final_lin_mem
-  retro_pt_obj$Cells_to_Lin <- final_cells_to_lin
-  retro_pt_obj$Graph_List <- NULL
-  retro_pt_obj$Arc_Length <- NULL
-  retro_pt_obj$Pseudotime <- NULL
+  # Update lineage information based on newly-mapped cells
+  retro_obj@lin_membership <- final_lin_mem
+  retro_obj@cells_to_lin <- final_cells_to_lin
 
-  return(retro_pt_obj)
+  return(retro_obj)
 }
 
 # Projects cells assigned to each MST segments (based on cluster labels) to each corresponding region of the curve
 projection_by_segment <- function(nl, coordinates, time, lineages, lin_membership, clusterLabels, id, arclengths, ext_bcurves) {
+
   res_all = vector(mode="list", length=nl) # initialize list for projection data
   for(i in 1:nl) {
     # Obtain cluster/nodes belonging to each lineage
@@ -239,7 +237,7 @@ projection_by_segment <- function(nl, coordinates, time, lineages, lin_membershi
         coord1 = cbind(coordinates[,1:2], time)[node,]
         coord2 = cbind(coordinates[,1:2], time)[nodes_to_match,]
 
-        dist_mat = as.matrix(stats::dist(rbind(coord1, coord2)))
+        dist_mat = as.matrix(proxy::dist(rbind(coord1, coord2)))
         dist_mat = dist_mat[-1,]
         closest_node = nodes_to_match[which.min(dist_mat[,1])] # closest node in lineage
         return(closest_node)

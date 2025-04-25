@@ -4,20 +4,17 @@
 \alias{generate_paths}
 \title{Infer and score MST}
 \usage{
-generate_paths(
-  kmedoids,
-  time,
-  coordinates,
-  terminal_cells = NULL,
-  starting_cells = NULL,
-  threshold = 0.1,
-  max_k,
-  start = "Mode",
-  period = NULL
-)
+generate_paths(retro_obj, kmedoids, max_k)
+}
+\arguments{
+\item{retro_obj}{RETRO meta object.}
+
+\item{kmedoids}{Cluster centroids and labels obtained from \code{kmnn_cluster()}.}
+
+\item{max_k}{Maximum number of clusters from the user-specified range of K.}
 }
 \value{
-List containing the (1) MST scoring infomration from \code{av_cell_dist()}
+List containing the (1) MST scoring information from \code{av_cell_dist()}
 and (2) clustering.
 }
 \description{

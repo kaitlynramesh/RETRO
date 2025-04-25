@@ -4,7 +4,7 @@
 \alias{get_num_lineages}
 \title{Determine consensus lineages in data.}
 \usage{
-get_num_lineages(retro_obj, percent = 0.05, cutoff = 0.8, threshold = 0.1)
+get_num_lineages(retro_obj, percent = 0.05, cutoff = 0.8)
 }
 \arguments{
 \item{retro_obj}{RETRO meta object}
@@ -13,20 +13,10 @@ get_num_lineages(retro_obj, percent = 0.05, cutoff = 0.8, threshold = 0.1)
 
 \item{cutoff}{(optional) Membership cutoff for whether a cell can be assigned to a lineage based
 on its mapping to that lineage across inferred MSTs. Default is 0.8 (cell must be mapped to lineage in ≥80\% of selected MSTs)}
-
-\item{threshold}{(optional) Cutoff to classify whether clusters are terminal ends of the trajectory. Default is 0.1.
-Note that this cutoff is scaled by number of clusters (K) / maximum number of clusters specified (Max_K).}
 }
 \value{
 This function returns \code{retro_obj} with updated information regarding the optimal MST for pseudotime inference, as well
 as well as membership lists separating cells into their respective developmental lineages.
-\if{html}{\out{<br>}}(1) \code{retro_obj[["RETRO_MST"]]} stores MST-specific information outputted by \code{create_dMST()}.
-\if{html}{\out{<br>}}(2) \code{retro_obj[["Lineage]]} stores the list of lineages from the MST
-\if{html}{\out{<br>}}(3) \code{retro_obj[["Centers]]} stores the centers/graph nodes that compose the MST.
-\if{html}{\out{<br>}}(4) \code{retro_obj[["Num_Lineages"]]} stores the number of lineages.
-\if{html}{\out{<br>}}(5) \code{retro_obj[["Lin_Membership"]]} stores membership information (which cell corresponds to which lineage).
-\if{html}{\out{<br>}}(6) \code{retro_boj[["Cells_to_lin"]]} stores the corresponding coordinates separated by lineage membership.
-number of lineages is stored in \code{retro_obj$Nul}
 }
 \description{
 Following the iterative MST inference across K clusters, this function

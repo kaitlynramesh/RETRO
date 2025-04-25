@@ -4,21 +4,17 @@
 \alias{pseudotime_fit}
 \title{Pseudotime fitting function}
 \usage{
-pseudotime_fit(retro_pt_obj, retro_obj)
+pseudotime_fit(retro_obj)
 }
 \arguments{
-\item{retro_pt_obj}{Pseudotime-specific object from RETRO which contains consensus information
-across MSTs regarding the global number of lineages and cell membership to each lineage.}
-
 \item{retro_obj}{MST-specific object from RETRO containing information about the dataset
 and the optimal MST used in curve fitting.}
 }
 \value{
-Updated list for \code{retro_pt_obj} where \code{retro_pt_obj[["Pseudotime"]]} stores RETRO pseudotime.
-Remaining arguments "Pseudotime_Mat", "Graph_List," and "Fitting" store intermediate steps from the
-pseudotime inference process.
+Updated elements in \code{retro_obj} to store RETRO pseudotime in \code{pseudotime}
+and intermediate fitting processes in \code{pseudotime_graph}.
 }
 \description{
-This function uses lineage information from \code{retro_pt_obj} and
-MST-specific information from \code{retro_obj} to infer pseudotime values.
+This function uses lineage information from the optimal MST
+to infer pseudotime values.
 }

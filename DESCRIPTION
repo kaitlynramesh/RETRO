@@ -7,6 +7,8 @@ Authors@R:
 Description: What the package does (one paragraph).
 License: MIT + file LICENSE
 Encoding: UTF-8
-Imports: igraph, proxy, stats, pracma, cluster, ggplot2, doParallel, foreach, parallel, princurve, bezier, MonoPoly, RColorBrewer, dplyr, purrr, scales, tibble, tidyr, cccd, utils, magrittr, rlang 
 Roxygen: list(markdown = TRUE)
+Imports: MonoPoly, RColorBrewer, bezier, cccd, cluster,
+    doParallel, dplyr, foreach, ggplot2, igraph, magrittr,
+    pracma, princurve, proxy, purrr, rlang, tidyr, methods
 RoxygenNote: 7.2.3
