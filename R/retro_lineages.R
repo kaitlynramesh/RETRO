@@ -170,7 +170,9 @@ get_num_lineages <- function(retro_obj, percent=0.05, cutoff=0.8) {
   coordinates = retro_obj@coordinates
   kmedoids = all_k[[clusn.i]][[iteration.i]]
 
-  cell_MST <- create_dMST(retro_obj, kmedoids)
+  retro_obj <- create_dMST(retro_obj, kmedoids)
+
+  cell_MST = retro_obj@RETRO_MST
   id <- cell_MST$ID
   nl <- length(cell_MST$Lineages)
   centers <- lapply(1:nl, function(i) coordinates[id[unlist(cell_MST$Lineages[[i]])],])
