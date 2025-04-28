@@ -144,7 +144,16 @@ populate_matrix <- function(max_cells, l, pt) {
   return(pseudotime_mat)
 }
 
-# Update lineage information such that EVERY cell maps to a lineage
+#' @title Final cell mapping
+#' @description This function pdates lineage membership information
+#' such that every cell maps to a branch of the optimal MST.
+#'
+#' @param retro_obj MST-specific object from RETRO containing information about the dataset
+#' and the optimal MST used in curve fitting.
+#' @return Updated elements in \code{retro_obj} to store RETRO pseudotime in \code{pseudotime}
+#' and intermediate fitting processes in \code{pseudotime_graph}.
+#' @export
+#'
 get_mapped_cells <- function(retro_obj) {
 
   coordinates <- retro_obj@coordinates

@@ -1,14 +1,16 @@
 Package: RETRO
-Title: What the Package Does (One Line, Title Case)
+Title: REal Time Referenced Ordering 
 Version: 0.0.0.9000
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
+    person("Kaitlyn", "Ramesh",, "ramesh.ka@northeastern.edu", role = c("aut", "cre"))
 Description: What the package does (one paragraph).
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 Imports: MonoPoly, RColorBrewer, bezier, cccd, cluster,
     doParallel, dplyr, foreach, ggplot2, igraph, magrittr,
-    pracma, princurve, proxy, purrr, rlang, tidyr, methods
+    pracma, princurve, proxy, purrr, rlang, tidyr, methods, ggpubr
+VignetteBuilder: knitr
+Suggests: knitr, rmarkdown
 RoxygenNote: 7.2.3
+

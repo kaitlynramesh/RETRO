@@ -26,11 +26,12 @@ generate_paths <- function(retro_obj, kmedoids, max_k) {
   time = retro_obj@time
 
   # determine cluster assignment and MST
-  cell_MST <- create_dMST(retro_obj, kmedoids)
-  clusterLabels <- retro_obj@RETRO_MST[["ClusterLabels"]]
+  retro_obj = create_dMST(retro_obj, kmedoids)
+  cell_MST = retro_obj@RETRO_MST
+  clusterLabels = retro_obj@RETRO_MST[["ClusterLabels"]]
 
-  points <- coordinates[,1:3] # Obtain 2D coordinates for PC projection
-  cell_dist <- av_cell_dist(cell_MST=cell_MST, clusterLabels=clusterLabels, points=points, time=time) # Calculate distance score
+  points = coordinates[,1:3] # Obtain 2D coordinates for PC projection
+  cell_dist = av_cell_dist(cell_MST=cell_MST, clusterLabels=clusterLabels, points=points, time=time) # Calculate distance score
 
   return(list(cell_dist, kmedoids))
 }
@@ -183,6 +184,9 @@ is.member <- function(edge, lineages) {
 #'
 scoring <- function(retro_obj, k_range, num_scores=100) {
 
+  ncores <- parallel::detectCores()
+  registerDoParallel(cores=ncores)
+
   results <- lapply(k_range, function(k) {
     iterations <- foreach(i=1:num_scores, .combine='c') %dopar% {
 
@@ -211,8 +215,8 @@ scoring <- function(retro_obj, k_range, num_scores=100) {
     l <- lapply(1:num_scores, function(j) results[[i]][[j]][[2]])
     return(l)})
 
-  retro_obj@all_k = all_k[[1]]
-  retro_obj@all_scores = all_scores[[1]]
+  retro_obj@all_k = all_k
+  retro_obj@all_scores = all_scores
 
   return(retro_obj)
 }
