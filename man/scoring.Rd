@@ -4,30 +4,18 @@
 \alias{scoring}
 \title{Parallelization of MST generation and scoring}
 \usage{
-scoring(
-  coordinates,
-  coordinates_uw,
-  time,
-  k,
-  num_scores,
-  num_cells,
-  terminal_cells = NULL,
-  starting_cells = NULL,
-  max_k,
-  start = "Average",
-  threshold = 0.1,
-  period = period
-)
+scoring(retro_obj, k_range, num_scores = 100)
 }
 \arguments{
-\item{coordinates}{Coordinates determined by \code{weight_coord()} that include a contribution from sampling time.}
+\item{retro_obj}{RETRO meta object. ???}
 
-\item{coordinates_uw}{Coordinates determined by \code{weight_coord()} that have an \strong{optional} contribution from sampling time.
-It is recommended that these coordinates are un-weighted so that the initial clustering covers the entire low-dimensiona projection.}
+\item{k_range}{Numeric vector for the range of K clusters that will be used to partition the coordinates}
+
+\item{num_scores}{Number of MSTs (scored MSTs) per clustering. Default is 100.}
 }
 \value{
-List containing the (1) MST scoring infomration from \code{av_cell_dist()}
-and (2) clustering.
+Lists in \code{retro_obj@all_scores} containing MST scoring information from \code{av_cell_dist()}
+and in \code{retro_obj@k} for storing results from iterative clustering.
 }
 \description{
 This function is a wrapper for the \code{generate_paths()} function

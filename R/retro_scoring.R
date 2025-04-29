@@ -13,20 +13,25 @@
 #' \code{create_dMST()} for MST inference and \code{av_cell_dist()} for MST scoring.
 #' It is iteratively called in the function \code{scoring()} to generate MSTs for
 #' coordinates clustered in a variety of ways.
-#' @return List containing the (1) MST scoring infomration from \code{av_cell_dist()}
+#' @param retro_obj RETRO meta object.
+#' @param kmedoids Cluster centroids and labels obtained from \code{kmnn_cluster()}.
+#' @param max_k Maximum number of clusters from the user-specified range of K.
+#' @return List containing the (1) MST scoring information from \code{av_cell_dist()}
 #' and (2) clustering.
 #' @export
 #'
-generate_paths <- function(kmedoids, time, coordinates, terminal_cells=NULL,
-                           starting_cells=NULL, threshold=0.10,
-                           max_k, start='Mode', period=NULL) {
+generate_paths <- function(retro_obj, kmedoids, max_k) {
 
-  cell_MST <- create_dMST(coordinates, kmedoids, time, terminal_cells, starting_cells,
-                          threshold, max_k, start, period)
-  clusterLabels <- cell_MST$ClusterLabels
+  coordinates = retro_obj@coordinates
+  time = retro_obj@time
 
-  points <- coordinates[,1:3] # Obtain 2D coordinates for PC projection
-  cell_dist <- av_cell_dist(cell_MST=cell_MST, clusterLabels=clusterLabels, points=points, time=time) # Calculate distance score
+  # determine cluster assignment and MST
+  retro_obj = create_dMST(retro_obj, kmedoids)
+  cell_MST = retro_obj@RETRO_MST
+  clusterLabels = retro_obj@RETRO_MST[["ClusterLabels"]]
+
+  points = coordinates[,1:3] # Obtain 2D coordinates for PC projection
+  cell_dist = av_cell_dist(cell_MST=cell_MST, clusterLabels=clusterLabels, points=points, time=time) # Calculate distance score
 
   return(list(cell_dist, kmedoids))
 }
@@ -47,7 +52,6 @@ generate_paths <- function(kmedoids, time, coordinates, terminal_cells=NULL,
 #' @return List containing the (1) number of lineages, (2) score, and a (3) binary membership matrix indicating
 #' which lineage the cell is closest to. This membership matrix will be used for detecting global lineages based on
 #' all MSTs.
-#' @export
 #'
 av_cell_dist <- function(cell_MST, clusterLabels, points, time) {
 
@@ -171,24 +175,49 @@ is.member <- function(edge, lineages) {
 #' It is recommended to run \code{scoring()} in an lapply() to contain all
 #' iterative clustering and scoring data in one .rda file.
 #'
-#' @param coordinates Coordinates determined by \code{weight_coord()} that include a contribution from sampling time.
-#' @param coordinates_uw Coordinates determined by \code{weight_coord()} that have an **optional** contribution from sampling time.
-#' It is recommended that these coordinates are un-weighted so that the initial clustering covers the entire low-dimensiona projection.
-#' @return List containing the (1) MST scoring infomration from \code{av_cell_dist()}
-#' and (2) clustering.
+#' @param retro_obj RETRO meta object. ???
+#' @param num_scores Number of MSTs (scored MSTs) per clustering. Default is 100.
+#' @param k_range Numeric vector for the range of K clusters that will be used to partition the coordinates
+#' @return Lists in \code{retro_obj@all_scores} containing MST scoring information from \code{av_cell_dist()}
+#' and in \code{retro_obj@k} for storing results from iterative clustering.
 #' @export
 #'
-scoring <- function(coordinates, coordinates_uw, time, k, num_scores, num_cells,
-                    terminal_cells=NULL, starting_cells=NULL, max_k, start='Average',
-                    threshold=0.10, period=period) {
-  iteration <- foreach(i=1:num_scores, .combine='c') %dopar% {
+scoring <- function(retro_obj, k_range, num_scores=100) {
 
-    m <- kmnn_cluster(coordinates = coordinates_uw, num_centers = k)
-    iteration <- generate_paths(m, coordinates=coordinates, time=time,
-                                terminal_cells=terminal_cells,
-                                starting_cells=starting_cells, max_k=max_k,
-                                start=start, threshold=threshold, period=period)
-    list(iteration)
-  }
-  return(iteration)
+  ncores <- parallel::detectCores()
+  registerDoParallel(cores=ncores)
+
+  results <- lapply(k_range, function(k) {
+    iterations <- foreach(i=1:num_scores, .combine='c') %dopar% {
+
+      coordinates = retro_obj@coordinates
+      coordinates_uw = retro_obj@coordinates_uw
+      time = retro_obj@time
+      terminal_cells = retro_obj@terminal_cells
+      starting_cells = retro_obj@starting_cells
+      start=retro_obj@start
+      threshold=retro_obj@threshold
+      period=retro_obj@period
+
+      m <- kmnn_cluster(coordinates = coordinates_uw, num_centers = k)
+      iteration <- generate_paths(retro_obj, kmedoids = m)
+      list(iteration)
+    }
+  })
+
+  # Extract scoring results
+  all_scores <- lapply(seq_along(k_range), function(i) {
+    l <- lapply(1:num_scores, function(j) results[[i]][[j]][[1]])
+    return(l)})
+
+  # Extract clustering results
+  all_k <- lapply(seq_along(k_range), function(i) {
+    l <- lapply(1:num_scores, function(j) results[[i]][[j]][[2]])
+    return(l)})
+
+  retro_obj@all_k = all_k
+  retro_obj@all_scores = all_scores
+
+  return(retro_obj)
 }
+

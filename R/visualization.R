@@ -43,23 +43,22 @@ connect_clus <- function(b, mstc) {
 #' the distribution of scores of MSTs inferred when coordinates are partitioned into K clusters.
 #' This plot in part explains the choice of K used in the optimal MST for curve fitting.
 #'
-#' @param all_scores List of MSTs obtained from the function \code{scoring()} that
-#' is organized by the corresponding K clusters used. The length of the list should be
-#' number of K clusters used, \code{length(k)}, and each list element should be the length \code{num_scores}.
-#' The list contains the scores and structures of each MST determined.
-#' @param num_scores Number of MSTs (scored MSTs) per clustering. Default is 100.
-#' @param k Range of clusters used for RETRO pseudotime analysis.
+#' @param retro_obj RETRO meta object.
 #' @return A ggplot2 object for a set of boxplots of scores per K clusters
 #' to show the effect of clustering on MST inference.
 #' @export
 #'
-boxplot_scoring <- function(all_scores, num_scores, k) {
+boxplot_scoring <- function(retro_obj) {
+
+  all_scores = retro_obj@all_scores
+  num_scores = length(all_scores[[1]])
+  k_range = retro_obj@k_range
 
   kscoring <- lapply(all_scores, function(x) sapply(x, "[[", 2))
   score_df <- unlist(rbind(as.data.frame(kscoring)))
-  num_k <- unlist(lapply(1:length(k), function(i) rep(k[i], num_scores)))
+  num_k <- unlist(lapply(1:length(k_range), function(i) rep(k_range[i], num_scores)))
   score_df <- data.frame(cbind(unlist(score_df), num_k))
-  rownames(score_df) <- 1:(num_scores * length(k))
+  rownames(score_df) <- 1:(num_scores * length(k_range))
   colnames(score_df) <- c('Score', 'K')
   score_df$K <- as.factor(score_df$K)
   ggplot(score_df, aes(x=.data$K, y=.data$Score)) +
@@ -69,7 +68,6 @@ boxplot_scoring <- function(all_scores, num_scores, k) {
           axis.title.x = element_text(size = 15),
           axis.title.y = element_text(size = 15),
           plot.title = element_text(size=20))
-
 }
 
 

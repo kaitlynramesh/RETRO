@@ -1,53 +1,12 @@
 #### Consensus lineage detection functions ####
 
 #' @importFrom igraph as.undirected cluster_louvain
-#' @importFrom proxy dist
+#' @import proxy
 #' @importFrom bezier bezier bezierArcLength
 #' @importFrom cccd nng
 #' @importFrom cluster pam
 #' @importFrom stats heatmap
-
-
-#' @title Create RETRO object
-#' @description This function stores all necessary information to carry out analysis with RETRO.
-#' @param coordinates Matrix of cell coordinates with a time contribution
-#' obtained using the \code{weight_coord()} function.
-#' @param terminal_cells (optional) List of cells belonging to the terminal ends of the trajectory.
-#' Each list element can contain the cells corresponding to one terminal cell type.
-#' @param starting_cells (optional) Vector of cells belonging to the starting end of the trajectory.
-#' RETRO currently allows for only one starting node.
-#' @param start Character parameter that is either "Average" or "Mode." If "Average,"
-#' the starting node is assigned to the cluster with the lowest average sampling time.
-#' If "Mode," the starting node is assigned the cluster with the greatest representation of the lowest sampling time-point.
-#' "Mode" is recommended for determining the starting node.
-#' @param period Specifies the minimum difference in time where one can expect the cells
-#' to return to an earlier state gene expression (make a cycle).
-#' @param k  Range of clusters used for RETRO pseudotime analysis.
-#' @param scoring List of MSTs obtained from the function \code{scoring()} that
-#' is organized by the corresponding K clusters used. The length of the list should be
-#' number of K clusters used, \code{length(k)}, and each list element should be the length \code{num_scores}.
-#' The list contains the scores and structures of each MST determined.
-#' @param clustering List of clusterings applied to the data obtained the function \code{scoring()} that
-#' is organized by the corresponding K clusters used. The length of the list should be
-#' number of K clusters used, \code{length(k)}, and each list element should be the length \code{num_scores}.
-#' @return RETRO object.
-#' @export
 #'
-#'
-create_meta_obj <- function(obj, coordinates, terminal_cells=NULL, starting_cells=NULL,
-                            start=NULL, period=NULL, k,
-                            clustering, scoring) {
-  time <- obj$Time
-  meta_obj <- list('Coordinates'=coordinates,
-                   'Time'=time, 'Period'=period,
-                   'Terminal_Cells'=terminal_cells, 'Starting_Cells'=starting_cells, 'Start'=start,
-                   'K'=k, 'All_K'=clustering, 'All_Scores'=scoring,
-                   'Num_Lineages'=NULL,
-                   'Lin_Membership'=NULL, 'Cells_to_Lin'=NULL,
-                   'RETRO_MST'=NULL, 'Curve'=NULL)
-  return(meta_obj)
-}
-
 
 # Organize scoring information and obtain membership matrices from the top-performing MSTs
 get_top_scores <- function(all_scores, num_scores, percent) {
@@ -121,35 +80,20 @@ get_lin_mem <- function(membership) {
 #' @param percent (optional) Fraction to select the top x% of high-performing MSTs based on score. Default is 0.05.
 #' @param cutoff (optional) Membership cutoff for whether a cell can be assigned to a lineage based
 #' on its mapping to that lineage across inferred MSTs. Default is 0.8 (cell must be mapped to lineage in ≥80% of selected MSTs)
-#' @param threshold (optional) Cutoff to classify whether clusters are terminal ends of the trajectory. Default is 0.1.
-#' Note that this cutoff is scaled by number of clusters (K) / maximum number of clusters specified (Max_K).
 #' @return This function returns \code{retro_obj} with updated information regarding the optimal MST for pseudotime inference, as well
 #' as well as membership lists separating cells into their respective developmental lineages.
-#' <br>(1) \code{retro_obj[["RETRO_MST"]]} stores MST-specific information outputted by \code{create_dMST()}.
-#' <br>(2) \code{retro_obj[["Lineage]]} stores the list of lineages from the MST
-#' <br>(3) \code{retro_obj[["Centers]]} stores the centers/graph nodes that compose the MST.
-#' <br>(4) \code{retro_obj[["Num_Lineages"]]} stores the number of lineages.
-#' <br>(5) \code{retro_obj[["Lin_Membership"]]} stores membership information (which cell corresponds to which lineage).
-#' <br>(6) \code{retro_boj[["Cells_to_lin"]]} stores the corresponding coordinates separated by lineage membership.
-#' number of lineages is stored in \code{retro_obj$Nul}
 #' @export
 #'
 #'
 # Determines # of Lineages (Heatmap) and Cell Membership to Each Lineage
-get_num_lineages <- function(retro_obj, percent=0.05, cutoff=0.8, threshold=0.10) {
+get_num_lineages <- function(retro_obj, percent=0.05, cutoff=0.8) {
 
-  all_k <- retro_obj$All_K # clustering information
-  all_scores <- retro_obj$All_Scores # scoring information
+  all_k <- retro_obj@all_k # clustering information
+  all_scores <- retro_obj@all_scores # scoring information
+  threshold <- retro_obj@threshold # threshold used for terminal cluster specification
+  num_scores = length(all_k[[1]]) # number of MSTs/clustering
 
-  coordinates <- retro_obj$Coordinates
-  time <- retro_obj$Time
-  start <- retro_obj$Start
-  period <- retro_obj$Period
-  starting_cells <- retro_obj$Starting_Cells
-  terminal_cells <- retro_obj$Terminal_Cells
-  max_k <- max(retro_obj$K)
-  num_scores <- length(all_scores[[1]])
-
+  # Identify top scoring MSTs based on percent cutoff
   top_data <- get_top_scores(all_scores, num_scores, percent)
   membership <- top_data[[1]] # membership matrices
   top_scores = top_data[[2]]
@@ -196,7 +140,7 @@ get_num_lineages <- function(retro_obj, percent=0.05, cutoff=0.8, threshold=0.10
     binary_mat[lin_membership[[j]], j] <- 1
   }
 
-  # (4) IDENTIFY CLOSEST MST TRAJECTORY
+  # (4) Identify closest MST trajectory
   closest_mst <- sapply(1:length(membership), function(i) {
     membership_t <- t(membership[[i]])
     nl_t = ncol(membership_t)
@@ -214,22 +158,28 @@ get_num_lineages <- function(retro_obj, percent=0.05, cutoff=0.8, threshold=0.10
     return(mn_dist)
   })
 
+  # (5) Regenerate top-performing MST
   index = which.min(closest_mst) # based on membership matrix
 
+  #### Secure specific clustering labels
   f <- top_scores[index]
   clusn.i <- ifelse (f %% num_scores == 0, f / num_scores, floor(f / num_scores) + 1) # which k
   iteration.i <- ifelse (f %% num_scores == 0, num_scores, f %% num_scores) # which iterations
 
-  cell_MST <- create_dMST(coordinates, all_k[[clusn.i]][[iteration.i]], time, terminal_cells,
-                          starting_cells, threshold, max_k=max_k, start=start, period=period)
-  id <- cell_MST$ID
-  nl <- length(cell_MST$Lineages) # final # of lineages
+  #### Obtain RETRO obj values to rerun MST calculation
+  coordinates = retro_obj@coordinates
+  kmedoids = all_k[[clusn.i]][[iteration.i]]
 
+  retro_obj <- create_dMST(retro_obj, kmedoids)
+
+  cell_MST = retro_obj@RETRO_MST
+  id <- cell_MST$ID
+  nl <- length(cell_MST$Lineages)
   centers <- lapply(1:nl, function(i) coordinates[id[unlist(cell_MST$Lineages[[i]])],])
 
-  retro_obj$Num_Lineages <- nl
-  retro_obj$RETRO_MST <- cell_MST
-  retro_obj$Centroids <- centers
+  retro_obj@num_lineages <- nl # number of global lineages
+  retro_obj@RETRO_MST <- cell_MST # optimal MST
+  retro_obj@centroids <- centers # cell centroids used in optimal MST (for curve calculation)
 
   # Map cell MST to consensus lineage clustering
   # Calculate the average membership / lineage and keep cells above threshold
@@ -261,9 +211,8 @@ get_num_lineages <- function(retro_obj, percent=0.05, cutoff=0.8, threshold=0.10
     cells_to_lin <- lapply(actual_order, function(i) cells_to_lin[[i]])
   }
 
-  retro_obj$Cells_to_Lin <- cells_to_lin
-  retro_obj$Lin_Membership <- lin_membership
-  retro_obj$Top_Data <- top_data
+  retro_obj@cells_to_lin <- cells_to_lin
+  retro_obj@lin_membership <- lin_membership
 
   return(retro_obj)
 }
@@ -298,21 +247,21 @@ extend_centers <- function(centroids, p) {
 #' about the optimal MST after scoring.
 #' @param extension (optional) Numerical parameter for extending the curve beyond the
 #' trajectory starting and terminal nodes. Default is 2.
-#' @return List of curve information stored in \code{retro_obj[["Curve"]]}.
-#' The list elements in \code{retro_obj[["Curve"]]} are: (1) smoothed Bézier curves,
-#' (2) MST centroids used to determine the curve,
-#' (3) smoothed Bézier curves prior to extension,
-#' and (4) the vector of arc lengths between each set of centroids.
+#' @return List of curve information stored in \code{retro_obj@RETRO_Curve}.
+#' The list elements are: (1) smoothed Bézier curves
+#' <br>(2) MST centroids used to determine the curve
+#' <br>(3) smoothed Bézier curves prior to extension
+#' <br>(4) the vector of arc lengths between each set of centroids.
 #' @export
 #'
 #'
 # Contains concatenated Bézier curve functions, manages extension of Bézier curve
 get_bezier_curve <- function(retro_obj, extension=2) {
 
-  nl <- retro_obj$Num_Lineages
+  nl <- retro_obj@num_lineages
 
   bcurve_data <- lapply(1:nl, function(i) {
-    centroids <- retro_obj$Centroids[[i]]
+    centroids <- retro_obj@centroids[[i]]
 
     extreme_centers <- extend_centers(centroids, extension)
     centroids.2 <- rbind(extreme_centers[1,], centroids, extreme_centers[2,])
@@ -329,7 +278,7 @@ get_bezier_curve <- function(retro_obj, extension=2) {
     return(list(ext_b, centroids, path_b, arclength))
   })
 
-  retro_obj$Curve <- bcurve_data
+  retro_obj@RETRO_Curve <- bcurve_data
   return(retro_obj)
 
 }

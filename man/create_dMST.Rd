@@ -4,36 +4,15 @@
 \alias{create_dMST}
 \title{Calculating the minimum spanning tree for trajectory inference}
 \usage{
-create_dMST(
-  coordinates,
-  kmnn,
-  time,
-  terminal_cells = NULL,
-  starting_cells = NULL,
-  threshold = 0.1,
-  max_k,
-  start = NULL,
-  period = NULL
-)
+create_dMST(retro_obj, kmedoids)
 }
 \arguments{
-\item{coordinates}{Matrix of cell coordinates with a time contribution
-obtained using the \code{weight_coord()} function.}
+\item{retro_obj}{RETRO meta object}
 
-\item{kmnn}{Cluster centroids and labels obtained from \code{kmnn_cluster()}.}
-
-\item{time}{Vector of sampling time points corresponding to each cell.}
-
-\item{start}{Character parameter that is either "Average" or "Mode." If "Average,"
-the starting node is assigned to the cluster with the lowest average sampling time.
-If "Mode," the starting node is assigned the cluster with the greatest representation of the lowest sampling time-point.
-"Mode" is recommended for determining the starting node.}
-
-\item{period}{Specifies the minimum difference in time where one can expect the cells
-to return to an earlier state gene expression (make a cycle).}
+\item{kmedoids}{Cluster centroids and labels obtained from \code{kmnn_cluster()}.}
 }
 \value{
-List of trajectory information, which is as follows: minimum spanning tree object (MST),
+List of MST trajectory information: minimum spanning tree object (MST),
 starting and terminal nodes (Start, Terminal), constituent lineages inferred (Lineages),
 cluster labels for cell coordinates (clusterLabels), node IDs (ID),
 MST edge cutoff based on time (Dt), and a logical value for whether the cells were reclustered (Reclus)

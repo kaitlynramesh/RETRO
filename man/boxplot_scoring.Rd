@@ -4,17 +4,10 @@
 \alias{boxplot_scoring}
 \title{Boxplots to visualize score distribution}
 \usage{
-boxplot_scoring(all_scores, num_scores, k)
+boxplot_scoring(retro_obj)
 }
 \arguments{
-\item{all_scores}{List of MSTs obtained from the function \code{scoring()} that
-is organized by the corresponding K clusters used. The length of the list should be
-number of K clusters used, \code{length(k)}, and each list element should be the length \code{num_scores}.
-The list contains the scores and structures of each MST determined.}
-
-\item{num_scores}{Number of MSTs (scored MSTs) per clustering. Default is 100.}
-
-\item{k}{Range of clusters used for RETRO pseudotime analysis.}
+\item{retro_obj}{RETRO meta object.}
 }
 \value{
 A ggplot2 object for a set of boxplots of scores per K clusters
