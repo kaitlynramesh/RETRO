@@ -26,12 +26,16 @@
 #'
 #' @slot all_k List containing cluster labels and centroids for each iteration of clustering on the range of K
 #' @slot all_scores List containing MST scores and cell membership for all K clusters in the specified range
-#' @slot num_lineages !!! include description here
-#' @slot centroids !!!! include description here
-#' @slot lin_membership !!!!!!!description goes here
-#' @slot cells_to_lin !!!!!!description goes here
-#' @slot RETRO_MST !!!!!!!description goes here
-#' @slot RETRO_Curve !!!!!!description goes here
+#' @slot num_lineages Number of global lineages detected by RETRO.
+#' @slot centroids Coordinates of constiutent nodes of the optimal MST.
+#' @slot lin_membership List of binary membership matrices grouping cells into the
+#' constituent developmental lineages inferred from the data.
+#' @slot cells_to_lin List of cell coordinates for each lineage inferred from the dataset.
+#' @slot RETRO_MST List from \code{create_dMST()} containing node, edge, and lineage information
+#' about the optimal MST used for curve fitting.
+#' @slot RETRO_Curve List of curve information stored in \code{retro_obj@RETRO_Curve}.
+#' Its elements are the smoothed Bézier curves, MST centroids, and vector of
+#' arc lengths between each pair of nodes.
 #' @slot pseudotime_graph !!! include description here
 #' @slot pseudotime !!!! include description here
 #'

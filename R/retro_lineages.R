@@ -205,10 +205,10 @@ get_num_lineages <- function(retro_obj, percent=0.05, cutoff=0.8) {
       })
       return(proportion)
     })
-    actual_order <- unlist(lapply(assign_lin, function(x) which.max(unlist(x))))
-    actual_order <- order(actual_order)
-    lin_membership <- lapply(actual_order, function(i) lin_membership[[i]])
-    cells_to_lin <- lapply(actual_order, function(i) cells_to_lin[[i]])
+    corrected_order <- unlist(lapply(assign_lin, function(x) which.max(unlist(x))))
+    corrected_order <- order(corrected_order)
+    lin_membership <- lapply(corrected_order, function(i) lin_membership[[i]])
+    cells_to_lin <- lapply(corrected_order, function(i) cells_to_lin[[i]])
   }
 
   retro_obj@cells_to_lin <- cells_to_lin
@@ -250,8 +250,7 @@ extend_centers <- function(centroids, p) {
 #' @return List of curve information stored in \code{retro_obj@RETRO_Curve}.
 #' The list elements are: (1) smoothed Bézier curves
 #' <br>(2) MST centroids used to determine the curve
-#' <br>(3) smoothed Bézier curves prior to extension
-#' <br>(4) the vector of arc lengths between each set of centroids.
+#' <br>(3) the vector of arc lengths between each set of centroids.
 #' @export
 #'
 #'
@@ -269,13 +268,15 @@ get_bezier_curve <- function(retro_obj, extension=2) {
     ext_b <- stitch_bezier_curves(centroids.2)[[1]] # Obtains data points for EXTENDED Bezier curves
     path_b <- stitch_bezier_curves(centroids) # Obtain data points for regular Bezier curves
     arclength <- path_b[[3]]
-    path_b <- path_b[[1]]
+    # path_b <- path_b[[1]]
 
     sl <- norm(c(extreme_centers[1,1:2]-centroids[1,1:2]), type='2') # making this edit given myo5 compressed pt
     fl <- norm(c(extreme_centers[2,1:2]-centroids[nrow(centroids),1:2]), type='2')
     arclength <- c(sl, arclength, fl)
 
-    return(list(ext_b, centroids, path_b, arclength))
+    return(list("Full_Curve" = ext_b, # only save extended Bézier spline
+                "Centroids" = centroids,
+                "Arc_Length" = arclength))
   })
 
   retro_obj@RETRO_Curve <- bcurve_data
