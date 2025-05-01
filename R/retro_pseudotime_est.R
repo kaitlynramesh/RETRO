@@ -6,7 +6,7 @@
 #' @importFrom ggplot2 ggplot aes element_text geom_point theme theme_bw
 #' @importFrom stats quantile
 #' @import proxy
-
+#'
 #'
 #' @title Pseudotime fitting function
 #' @description This function uses lineage information from the optimal MST

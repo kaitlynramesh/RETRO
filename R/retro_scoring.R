@@ -175,7 +175,7 @@ is.member <- function(edge, lineages) {
 #' It is recommended to run \code{scoring()} in an lapply() to contain all
 #' iterative clustering and scoring data in one .rda file.
 #'
-#' @param retro_obj RETRO meta object. ???
+#' @param retro_obj RETRO meta object.
 #' @param num_scores Number of MSTs (scored MSTs) per clustering. Default is 100.
 #' @param k_range Numeric vector for the range of K clusters that will be used to partition the coordinates
 #' @return Lists in \code{retro_obj@all_scores} containing MST scoring information from \code{av_cell_dist()}
