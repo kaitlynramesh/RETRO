@@ -7,7 +7,7 @@
 scoring(retro_obj, k_range, num_scores = 100)
 }
 \arguments{
-\item{retro_obj}{RETRO meta object. ???}
+\item{retro_obj}{RETRO meta object.}
 
 \item{k_range}{Numeric vector for the range of K clusters that will be used to partition the coordinates}
 

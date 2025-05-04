@@ -46,17 +46,21 @@ to return to an earlier state gene expression (make a cycle).}
 
 \item{\code{all_scores}}{List containing MST scores and cell membership for all K clusters in the specified range}
 
-\item{\code{num_lineages}}{!!! include description here}
+\item{\code{num_lineages}}{Number of global lineages detected by RETRO.}
 
-\item{\code{centroids}}{!!!! include description here}
+\item{\code{centroids}}{Coordinates of constiutent nodes of the optimal MST.}
 
-\item{\code{lin_membership}}{!!!!!!!description goes here}
+\item{\code{lin_membership}}{List of binary membership matrices grouping cells into the
+constituent developmental lineages inferred from the data.}
 
-\item{\code{cells_to_lin}}{!!!!!!description goes here}
+\item{\code{cells_to_lin}}{List of cell coordinates for each lineage inferred from the dataset.}
 
-\item{\code{RETRO_MST}}{!!!!!!!description goes here}
+\item{\code{RETRO_MST}}{List from \code{create_dMST()} containing node, edge, and lineage information
+about the optimal MST used for curve fitting.}
 
-\item{\code{RETRO_Curve}}{!!!!!!description goes here}
+\item{\code{RETRO_Curve}}{List of curve information stored in \code{retro_obj@RETRO_Curve}.
+Its elements are the smoothed Bézier curves, MST centroids, and vector of
+arc lengths between each pair of nodes.}
 
 \item{\code{pseudotime_graph}}{!!! include description here}
 

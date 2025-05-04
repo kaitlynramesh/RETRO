@@ -4,8 +4,6 @@
 #' @importFrom MonoPoly monpol
 #' @importFrom utils head tail
 #' @importFrom ggplot2 ggplot aes element_text geom_point theme theme_bw
-#' @importFrom stats quantile
-#' @import proxy
 #'
 #'
 #' @title Pseudotime fitting function
@@ -42,7 +40,7 @@ pseudotime_fit <- function(retro_obj) {
 
   # Obtain curve and arc length information
   ext_bcurves <- sapply(retro_obj@RETRO_Curve, "[", 1)
-  arclengths <- sapply(retro_obj@RETRO_Curve, "[", 4)
+  arclengths <- sapply(retro_obj@RETRO_Curve, "[", 3)
 
   # Initialize lists for storage
   pseudotime_list <- vector(mode='list', length=nl)
@@ -52,7 +50,7 @@ pseudotime_fit <- function(retro_obj) {
   # Obtain curve and arc length information
   retro_curve = retro_obj@RETRO_Curve
   ext_bcurves <- sapply(retro_curve, "[", 1)
-  arclengths <- sapply(retro_curve, "[", 4)
+  arclengths <- sapply(retro_curve, "[", 3)
 
   # Project cells according to the corresponding MST segment
   projection_res = projection_by_segment(nl=nl,
@@ -193,7 +191,7 @@ get_mapped_cells <- function(retro_obj) {
     nearest_node = lapply(unmatched_clusters, function(u) {
 
       p = coordinates[u,]
-      dist_mat = as.matrix(proxy::dist(rbind(p, coordinates[lin_ids,])))
+      dist_mat = as.matrix(dist(rbind(p, coordinates[lin_ids,])))
       dist_mat = dist_mat[-1,]
       dist_vec = dist_mat[,1]
 

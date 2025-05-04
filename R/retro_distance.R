@@ -2,9 +2,7 @@
 
 #' @importFrom igraph graph.adjacency get.edgelist graph_from_edgelist minimum.spanning.tree as_edgelist V E all_simple_paths
 #' @importFrom utils tail
-#' @importFrom stats lm predict dist median
 #' @importFrom pracma Mode isempty
-#' @import proxy
 #'
 
 # Determine number of PCs that make up 90% variance
@@ -54,7 +52,7 @@ pc_distance_function <- function(time,
   time = as.integer(factor(time))
 
   # Time distance matrix to calculate mean time between cells
-  tmat <- proxy::dist(time) # Euclidean
+  tmat <- dist(time) # Euclidean
   tmat <- as.matrix(tmat)
   tmat <- tmat**2 # difference squared
   mean_t <- mean(as.numeric(tmat))
@@ -71,7 +69,7 @@ pc_distance_function <- function(time,
   rownames(pc_weighted) <- rownames(pca$x[,1:n_pc])
 
   # PCA distance matrix to calculate median distance between PC values
-  pc_mat <- as.matrix(proxy::dist(pc_weighted))
+  pc_mat <- as.matrix(dist(pc_weighted))
   pc_mat <- pc_mat**2
   median_pc <- median(as.numeric((pc_mat)))
 
@@ -251,7 +249,7 @@ create_dMST <- function(retro_obj, kmedoids) {
   terminal.clus <- which(id %in% time_stats$Terminal_ID)
 
   # Distance matrix for cluster centers
-  mat <- as.matrix(proxy::dist(medoids))
+  mat <- as.matrix(dist(medoids))
   rownames(mat) <- colnames(mat) <- 1:length(id)
 
   # Set up for minimum spanning tree

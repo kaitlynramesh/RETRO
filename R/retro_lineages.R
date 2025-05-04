@@ -1,11 +1,9 @@
 #### Consensus lineage detection functions ####
 
 #' @importFrom igraph as.undirected cluster_louvain
-#' @import proxy
 #' @importFrom bezier bezier bezierArcLength
 #' @importFrom cccd nng
 #' @importFrom cluster pam
-#' @importFrom stats heatmap
 #'
 
 # Organize scoring information and obtain membership matrices from the top-performing MSTs

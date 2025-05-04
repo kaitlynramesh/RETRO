@@ -17,8 +17,7 @@ trajectory starting and terminal nodes. Default is 2.}
 List of curve information stored in \code{retro_obj@RETRO_Curve}.
 The list elements are: (1) smoothed Bézier curves
 \if{html}{\out{<br>}}(2) MST centroids used to determine the curve
-\if{html}{\out{<br>}}(3) smoothed Bézier curves prior to extension
-\if{html}{\out{<br>}}(4) the vector of arc lengths between each set of centroids.
+\if{html}{\out{<br>}}(3) the vector of arc lengths between each set of centroids.
 }
 \description{
 This function creates the Bézier spline curve to smooth out the
