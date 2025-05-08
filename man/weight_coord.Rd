@@ -4,12 +4,11 @@
 \alias{weight_coord}
 \title{Defining cell coordinates using gene expression and time}
 \usage{
-weight_coord(scdata, weight)
+weight_coord(eset, weight)
 }
 \arguments{
-\item{scdata}{A data frame containing experimental information and the PCA projection that will be used.
-The vector of sampling time for each cell should be stored in scdata$Time and the
-PCA object returned by \code{prcomp()} should be stored in scdata$PCA.}
+\item{eset}{Biobase ExpressionSet object that contains PCA information \code{experimentData(eset)@other[["PCA"]]}
+and sampling time information \code{phenoData(scd_bifurcation)@data[["time"]]}.}
 
 \item{weight}{A numerical value indicating contribution from PCA for scaling the \code{time} vector.
 Default value is 1 (where PCA and time have an equal contribution). Increasing lambda will increase contribution from PCA.}

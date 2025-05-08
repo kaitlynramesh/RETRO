@@ -184,9 +184,6 @@ is.member <- function(edge, lineages) {
 #'
 scoring <- function(retro_obj, k_range, num_scores=100) {
 
-  ncores <- parallel::detectCores()
-  registerDoParallel(cores=ncores)
-
   results <- lapply(k_range, function(k) {
     iterations <- foreach(i=1:num_scores, .combine='c') %dopar% {
 

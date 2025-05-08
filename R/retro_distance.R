@@ -3,7 +3,8 @@
 #' @importFrom igraph graph.adjacency get.edgelist graph_from_edgelist minimum.spanning.tree as_edgelist V E all_simple_paths
 #' @importFrom utils tail
 #' @importFrom pracma Mode isempty
-#'
+#' @importFrom stats lm predict dist median
+#' @importFrom Biobase experimentData phenoData
 
 # Determine number of PCs that make up 90% variance
 num_pc <- function(pca) {
@@ -88,18 +89,20 @@ pc_distance_function <- function(time,
 #' @title Defining cell coordinates using gene expression and time
 #' @description This function is a wrapper for the function \code{pc_distance_function()}.
 #'
-#' @param scdata A data frame containing experimental information and the PCA projection that will be used.
-#' The vector of sampling time for each cell should be stored in scdata$Time and the
-#' PCA object returned by \code{prcomp()} should be stored in scdata$PCA.
+#' @param eset Biobase ExpressionSet object that contains PCA information `experimentData(eset)@other[["PCA"]]`
+#' and sampling time information `phenoData(scd_bifurcation)@data[["time"]]`.
 #' @param weight A numerical value indicating contribution from PCA for scaling the \code{time} vector.
 #' Default value is 1 (where PCA and time have an equal contribution). Increasing lambda will increase contribution from PCA.
 #' @return Returns the updated cell coordinates based on the PCA projection and sampling time.
 #' @export
 #'
-# Weight coordinates using realtime_dist functions
-weight_coord <- function(scdata, weight) {
-  time <- as.numeric(scdata$Time)
-  pca <- scdata$PCA
+# Weight coordinates using distance functions.
+weight_coord <- function(eset, weight) {
+  # time <- as.numeric(scdata$Time)
+  # pca <- scdata$PCA
+  time = phenoData(eset)@data[["time"]]
+  pca = experimentData(eset)@other[["PCA"]]
+
   mat_list <- pc_distance_function(time, pca, weight)
   coordinates <- mat_list$Coordinates
   return(coordinates)

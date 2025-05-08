@@ -4,7 +4,7 @@
 #' @importFrom MonoPoly monpol
 #' @importFrom utils head tail
 #' @importFrom ggplot2 ggplot aes element_text geom_point theme theme_bw
-#'
+#' @importFrom stats quantile predict dist
 #'
 #' @title Pseudotime fitting function
 #' @description This function uses lineage information from the optimal MST
@@ -103,7 +103,7 @@ pseudotime_fit <- function(retro_obj) {
   }
 
   retro_obj@pseudotime_graph = graph_list
-  retro_obj@pseudotime = pseudotime
+  retro_obj@pseudotime = as.numeric(pseudotime)
   # retro_pt_obj$Pseudotime_Mat = pseudotime_mat
   # retro_pt_obj$Fitting <- lambda_list
 

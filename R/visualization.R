@@ -8,7 +8,9 @@
 #' @importFrom grDevices colorRampPalette
 #' @importFrom rlang .data
 #' @importFrom magrittr %>%
-
+#' @importFrom stats density
+#'
+#'
 
 # Creates data frame of center coordinates (df) in order of MST
 get_mst_coord <- function(lineage, center_coord) {
@@ -83,7 +85,7 @@ boxplot_scoring <- function(retro_obj) {
 #' @export
 #'
 #'
-psupertime_density <- function(time, pseudotime, bw=0.5, log1p=F) {
+pseudotime_density <- function(time, pseudotime, bw=0.5, log1p=F) {
 
   time = as.numeric(time)
   pseudotime = as.numeric(pseudotime)

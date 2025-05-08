@@ -1,5 +1,9 @@
 #### Clustering functions ####
 
+#' @importFrom stats kmeans density dist
+#'
+#'
+
 find_nearest_cell <- function(centroid, coordinates) {
   dims = c(1,2,ncol(coordinates))
   centroid = centroid[dims]
