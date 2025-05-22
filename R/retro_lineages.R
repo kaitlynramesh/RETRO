@@ -9,14 +9,14 @@
 
 # Organize scoring information and obtain membership matrices from the top-performing MSTs
 get_top_scores <- function(all_scores, num_scores, percent) {
-  s <- sapply(all_scores, "[")    # num_scores x k-possible matrix of data
-  s <- unlist(sapply(s, "[")[2,]) # Extract scores
+  s <- vapply(all_scores, "[")    # num_scores x k-possible matrix of data
+  s <- unlist(vapply(s, "[")[2,]) # Extract scores
   p <- percent * num_scores * length(all_scores)
-  top_scores <- order(s)[1:p]           # Identify  lowest scores
+  top_scores <- order(s)[seq(p)] # Identify  lowest scores
   clusn <- ifelse (top_scores %% num_scores == 0, top_scores / num_scores, floor(top_scores / num_scores) + 1)
 
-  top_mm <- 1:p # top membership matrices
-  for (i in 1:length(clusn)) {
+  top_mm <- seq(p) # top membership matrices
+  for (i in seq_along(clusn)) {
     v <- all_scores[[clusn[i]]]     # number of scores / cluster
     index <- ifelse (top_scores[i] %% num_scores == 0, num_scores, top_scores[i] %% num_scores)
     top_mm[i] <- v[[index]][3]  # get membership matrix
@@ -40,20 +40,20 @@ get_lin_mem <- function(membership) {
   p2 <- max(nl_detected) # break 2
 
   b <- vector(mode='list', length=p2)[unl]
-  b <- lapply(1:length(unl), function(i) {b[[i]] <- vector(mode='list', length=unl[i])})
+  b <- lapply(seq(length(unl)), function(i) {b[[i]] <- vector(mode='list', length=unl[i])})
 
   # Additional row of 0's to single-lineage membership "vector" --> matrix
-  x <- lapply(1:length(membership), function(i)
+  x <- lapply(seq_along(membership), function(i)
     if (is.null(nrow(membership[[i]]))) {
       rbind(membership[[i]], rep(0, length(membership[[i]])))
     } else {
       membership[[i]]
     })
 
-  b <- lapply(1:p2, function(i) {
+  b <- lapply(seq(p2), function(i) {
     a <- x[which(nl_detected == i)] # Obtain lineages w/ "i" # of lineages
-    for (j in 1:i) {
-      df <- as.data.frame(sapply(a, "[", j,))
+    for (j in seq(i)) {
+      df <- as.data.frame(vapply(a, "[", j,))
       colnames(df) <- seq_len(ncol(df))
       b[[j]] <- df
       b[[j]] <- t(as.data.frame(do.call(rbind, b[[j]])))
@@ -62,7 +62,7 @@ get_lin_mem <- function(membership) {
   })
 
   all_membership <- unlist(b[unl], recursive = FALSE)
-  z <- which(sapply(lapply(all_membership, nrow), is.null)) # remove unused lineages
+  z <- which(vapply(lapply(all_membership, nrow), is.null)) # remove unused lineages
   all_membership <- if(isempty(z)) {
     do.call(cbind, all_membership)
   } else { do.call(cbind, all_membership[-z]) }
@@ -110,7 +110,7 @@ get_num_lineages <- function(retro_obj, percent=0.05, cutoff=0.8) {
 
     # Jaccard distance on entire membership matrices for both lineages
     m <- as.matrix(proxy::dist(all_membership, by_rows = FALSE, method = "Jaccard"))
-    rownames(m) <- colnames(m) <- 1:nrow(m)
+    rownames(m) <- colnames(m) <- seq(nrow(m))
 
     # Louvain clustering to identify # lineages
     knn <- igraph::as.undirected(nng(m, k=dim(m)[1]/max(nl_detected)))
@@ -129,7 +129,7 @@ get_num_lineages <- function(retro_obj, percent=0.05, cutoff=0.8) {
 
   # (2) Cluster cells based on membership matrix
   factor = pam(m, nl_knn, diss=TRUE) # grouping for lineage membership matrices
-  lin_membership <- lapply(1:nl_knn, function(i) {
+  lin_membership <- lapply(seq(nl_knn), function(i) {
     x <- t(all_membership[,factor$clustering==i])
     return(which(colMeans(x) >= cutoff))})
 
@@ -140,7 +140,7 @@ get_num_lineages <- function(retro_obj, percent=0.05, cutoff=0.8) {
   }
 
   # (4) Identify closest MST trajectory
-  closest_mst <- sapply(1:length(membership), function(i) {
+  closest_mst <- vapply(seq_along(membership), function(i) {
     membership_t <- t(membership[[i]])
     nl_t = ncol(membership_t)
 
@@ -152,7 +152,7 @@ get_num_lineages <- function(retro_obj, percent=0.05, cutoff=0.8) {
     mem_col = (nl_knn+1):ncol(compare_membership)
 
     compare_dist = as.matrix(proxy::dist(compare_membership, by_rows = FALSE, method = "Jaccard"))
-    mn_dist = mean(compare_dist[1:nl_knn,mem_col]) + abs(nl_t-nl_knn)
+    mn_dist = mean(compare_dist[seq(nl_knn),mem_col]) + abs(nl_t-nl_knn)
 
     return(mn_dist)
   })
@@ -174,7 +174,7 @@ get_num_lineages <- function(retro_obj, percent=0.05, cutoff=0.8) {
   cell_MST = retro_obj@RETRO_MST
   id <- cell_MST$ID
   nl <- length(cell_MST$Lineages)
-  centers <- lapply(1:nl, function(i) coordinates[id[unlist(cell_MST$Lineages[[i]])],])
+  centers <- lapply(seq(nl), function(i) coordinates[id[unlist(cell_MST$Lineages[[i]])],])
 
   retro_obj@num_lineages <- nl # number of global lineages
   retro_obj@RETRO_MST <- cell_MST # optimal MST
@@ -186,12 +186,12 @@ get_num_lineages <- function(retro_obj, percent=0.05, cutoff=0.8) {
   m_matched_nl_dist = as.matrix(proxy::dist(m_matched_nl, by_rows = FALSE, method = "Jaccard"))
 
   factor_matched_nl = pam(m_matched_nl_dist, nl, diss=TRUE) # grouping for lineage membership matrices
-  lin_membership <- lapply(1:nl, function(i) {
+  lin_membership <- lapply(seq(nl), function(i) {
     x <- t(m_matched_nl[,factor_matched_nl$clustering==i])
     return(which(colMeans(x) >= cutoff))})
 
   cells_to_lin <- vector(mode='list', length=nl)
-  cells_to_lin <- lapply(1:nl, function(i) {
+  cells_to_lin <- lapply(seq(nl), function(i) {
     x <- t(m_matched_nl[,factor_matched_nl$clustering==i])
     return(coordinates[which(colMeans(x) >= cutoff),])})
 
@@ -258,7 +258,7 @@ get_bezier_curve <- function(retro_obj, extension=2) {
 
   nl <- retro_obj@num_lineages
 
-  bcurve_data <- lapply(1:nl, function(i) {
+  bcurve_data <- lapply(seq(nl), function(i) {
     centroids <- retro_obj@centroids[[i]]
 
     extreme_centers <- extend_centers(centroids, extension)
@@ -299,7 +299,7 @@ stitch_bezier_curves <- function(S, inc=.001) {
 
   # matrix of ctrl_points, P
   P_mat <- matrix(nrow=num_curves, ncol=d)
-  for (i in 1:num_curves) {
+  for (i in seq(num_curves)) {
     P_mat[i,] <- 2 * (2 * S[i,] + S[i+1,])
   }
   P_mat[1,] <- S[1,] + 2 * S[2,]
@@ -311,19 +311,19 @@ stitch_bezier_curves <- function(S, inc=.001) {
   # solve for second unknown control point, B
   B <- matrix(nrow=nrow(A), ncol=ncol(A))
 
-  for (i in 1:(num_curves-1)) {
+  for (i in seq(num_curves-1)) {
     B[i,] <- 2 * S[i+1,] - A[i+1,]
   }
   B[num_curves,] = (A[n-1,] + S[n,]) / 2
 
-  ctrl_points <- lapply(1:num_curves, function(i) rbind(S[i,], A[i,], B[i,], S[i+1,]))
+  ctrl_points <- lapply(seq(num_curves), function(i) rbind(S[i,], A[i,], B[i,], S[i+1,]))
 
   # solve for cubic Bezier curves
-  piecewise_bezier <- lapply(1:num_curves, function(i) { bezier(seq(0,1, inc), ctrl_points[[i]], deg=3) })
-  arclength <- lapply(1:num_curves, function(i) { bezierArcLength(ctrl_points[[i]][,1:2], t1=0, t2=1, deg=3) })
+  piecewise_bezier <- lapply(seq(num_curves), function(i) { bezier(seq(0,1, inc), ctrl_points[[i]], deg=3) })
+  arclength <- lapply(seq(num_curves), function(i) { bezierArcLength(ctrl_points[[i]][,1:2], t1=0, t2=1, deg=3) })
 
   bcurve <- do.call(rbind, piecewise_bezier)
-  arclength <- unlist(sapply(arclength, "[", 'arc.length'))
+  arclength <- unlist(vapply(arclength, "[", 'arc.length'))
 
   return(list(bcurve, ctrl_points, arclength))
 }

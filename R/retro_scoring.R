@@ -105,7 +105,7 @@ get_distance <- function(point, edges, center_coord) {
   y <- as.numeric(point[n2])
   z <- as.numeric(point[n3])
 
-  cell_dist <- 1:nrow(edges) # Initialize vectors
+  cell_dist <- seq(nrow(edges)) # Initialize vectors
 
   check_alpha <- function(i) {
 
@@ -140,7 +140,7 @@ get_distance <- function(point, edges, center_coord) {
     return(cell_dist)
   }
 
-  i <- 1:nrow(edges)
+  i <- seq(nrow(edges))
   cell_dist <- unlist((lapply(i, check_alpha))) # Find distance between point and all edges
   cell_dist <- diag(matrix(cell_dist, nrow=nrow(edges),ncol=nrow(edges), byrow=TRUE))
 
@@ -157,8 +157,8 @@ is.member <- function(edge, lineages) {
 
   edge <- as.numeric(edge)
   n <- length(lineages)
-  mem <- 1:n
-  for (i in 1:n) {
+  mem <- seq(n)
+  for (i in seq(n)) {
     lineage <- unlist(lineages[[i]], use.names = FALSE)
     index <- match(edge, lineage)
     index[is.na(index)] <- 0
@@ -185,7 +185,7 @@ is.member <- function(edge, lineages) {
 scoring <- function(retro_obj, k_range, num_scores=100) {
 
   results <- lapply(k_range, function(k) {
-    iterations <- foreach(i=1:num_scores, .combine='c') %dopar% {
+    iterations <- foreach(i=seq(num_scores), .combine='c') %dopar% {
 
       coordinates = retro_obj@coordinates
       coordinates_uw = retro_obj@coordinates_uw
@@ -204,12 +204,12 @@ scoring <- function(retro_obj, k_range, num_scores=100) {
 
   # Extract scoring results
   all_scores <- lapply(seq_along(k_range), function(i) {
-    l <- lapply(1:num_scores, function(j) results[[i]][[j]][[1]])
+    l <- lapply(seq(num_scores), function(j) results[[i]][[j]][[1]])
     return(l)})
 
   # Extract clustering results
   all_k <- lapply(seq_along(k_range), function(i) {
-    l <- lapply(1:num_scores, function(j) results[[i]][[j]][[2]])
+    l <- lapply(seq(num_scores), function(j) results[[i]][[j]][[2]])
     return(l)})
 
   retro_obj@all_k = all_k

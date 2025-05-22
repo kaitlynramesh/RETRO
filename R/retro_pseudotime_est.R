@@ -39,8 +39,8 @@ pseudotime_fit <- function(retro_obj) {
   graph_list <- vector(mode='list', length=nl)
 
   # Obtain curve and arc length information
-  ext_bcurves <- sapply(retro_obj@RETRO_Curve, "[", 1)
-  arclengths <- sapply(retro_obj@RETRO_Curve, "[", 3)
+  ext_bcurves <- vapply(retro_obj@RETRO_Curve, "[", 1)
+  arclengths <- vapply(retro_obj@RETRO_Curve, "[", 3)
 
   # Initialize lists for storage
   pseudotime_list <- vector(mode='list', length=nl)
@@ -49,8 +49,8 @@ pseudotime_fit <- function(retro_obj) {
 
   # Obtain curve and arc length information
   retro_curve = retro_obj@RETRO_Curve
-  ext_bcurves <- sapply(retro_curve, "[", 1)
-  arclengths <- sapply(retro_curve, "[", 3)
+  ext_bcurves <- vapply(retro_curve, "[", 1)
+  arclengths <- vapply(retro_curve, "[", 3)
 
   # Project cells according to the corresponding MST segment
   projection_res = projection_by_segment(nl=nl,
@@ -62,12 +62,12 @@ pseudotime_fit <- function(retro_obj) {
                                          id=id, arclengths=arclengths,
                                          ext_bcurves=ext_bcurves)
 
-  lambda_per_lineage = sapply(projection_res, "[", "final_lambda")
-  time_per_lineage = sapply(projection_res, "[", "real_time")
-  which_cells = sapply(projection_res, "[", "which_cells")
+  lambda_per_lineage = vapply(projection_res, "[", "final_lambda")
+  time_per_lineage = vapply(projection_res, "[", "real_time")
+  which_cells = vapply(projection_res, "[", "which_cells")
 
   # Pseudotime-fitting per lineage (for cyclic/multifurcating lineages)
-  for(i in 1:nl) {
+  for(i in seq(nl)) {
     real_time = time_per_lineage[[i]]
     lambda = lambda_per_lineage[[i]]
 
@@ -136,7 +136,7 @@ lambda_curve_fit <- function(lambda, real_time) {
 # the correct pseudotime assigned to each cell
 populate_matrix <- function(max_cells, l, pt) {
   pseudotime_mat <- as.matrix(rep(NA, length=max_cells))
-  for (i in 1:length(l)) {
+  for (i in seq_along(l)) {
     pseudotime_mat[l[i],] <- pt[i]
   }
   return(pseudotime_mat)
@@ -166,7 +166,7 @@ get_mapped_cells <- function(retro_obj) {
   id = cell_MST[["ID"]]
 
   # Identify the cells that don't belong to a lineage
-  total_cells <- 1:nrow(coordinates)
+  total_cells <- seq(nrow(coordinates))
   x <- total_cells[!(total_cells %in% unique(unlist(lin_membership)))]
   nl <- length(cells_to_lin)
 
@@ -178,7 +178,7 @@ get_mapped_cells <- function(retro_obj) {
   } else if (nl==1) {
 
     final_cells_to_lin = list(coordinates)
-    final_lin_mem = list(1:nrow(coordinates))
+    final_lin_mem = list(seq(nrow(coordinates)))
 
   } else {
 
@@ -199,12 +199,12 @@ get_mapped_cells <- function(retro_obj) {
     })
     nearest_node = as.numeric(nearest_node)
 
-    nearest_lin <- sapply(nearest_node, function(x)
-      which(sapply(cluster_membership, function(y) x %in% y)))
+    nearest_lin <- vapply(nearest_node, function(x)
+      which(vapply(cluster_membership, function(y) x %in% y)))
 
     cluster_match_df = cbind(unmatched_clusters, nearest_node)
 
-    for(r in 1:nrow(cluster_match_df)) {
+    for(r in seq(nrow(cluster_match_df))) {
       u = cluster_match_df[r,1]
       l = nearest_lin[[r]]
       to_match = x[which(clusterLabels[x] %in% u)]
@@ -225,7 +225,7 @@ get_mapped_cells <- function(retro_obj) {
 projection_by_segment <- function(nl, coordinates, time, lineages, lin_membership, clusterLabels, id, arclengths, ext_bcurves) {
 
   res_all = vector(mode="list", length=nl) # initialize list for projection data
-  for(i in 1:nl) {
+  for(i in seq(nl)) {
     # Obtain cluster/nodes belonging to each lineage
     l <- unlist(lineages[i])
     lin_clusterLabels = clusterLabels[lin_membership[[i]]]
@@ -240,7 +240,7 @@ projection_by_segment <- function(nl, coordinates, time, lineages, lin_membershi
       nodes_to_match = lin_id[-which(lin_id %in% node_not_used)] # nodes in final lineage
       if(isempty(nodes_to_match)) { nodes_to_match = lin_id }
 
-      node_match = sapply(node_not_used, function(node) {
+      node_match = vapply(node_not_used, function(node) {
         coord1 = cbind(coordinates[,1:2], time)[node,]
         coord2 = cbind(coordinates[,1:2], time)[nodes_to_match,]
 
@@ -259,7 +259,7 @@ projection_by_segment <- function(nl, coordinates, time, lineages, lin_membershi
     num_nodes = length(node_ids)
 
     # Edge list for order of nodes in lineage
-    edge_index <- apply(cbind(l[1:(length(l)-1)], l[-1]), 2, function(x) id[x])
+    edge_index <- apply(cbind(l[seq(length(l)-1)], l[-1]), 2, function(x) id[x])
 
     # Dimensions used for projection
     dimensions = 1:2
@@ -277,7 +277,7 @@ projection_by_segment <- function(nl, coordinates, time, lineages, lin_membershi
     node_coord <- lapply(node_ids, function(x) coordinates[x,dimensions])
 
     # Obtain projection of cells to corresponding segment of lineage
-    projection <- lapply(1:length(nodes_in_lin), function(j)  {
+    projection <- lapply(seq(length(nodes_in_lin)), function(j)  {
       node <- nodes_in_lin[j]
       ids = node_ids[[as.character(nodes_in_lin[j])]]
       node_cluster = node_coord[[as.character(nodes_in_lin[j])]]
@@ -313,8 +313,8 @@ projection_by_segment <- function(nl, coordinates, time, lineages, lin_membershi
       return(list(ids, scaled_lambda))
     })
 
-    which_cells <- unlist(sapply(projection, "[", 1))
-    final_lambda <- unlist(sapply(projection, "[", 2))
+    which_cells <- unlist(vapply(projection, "[", 1))
+    final_lambda <- unlist(vapply(projection, "[", 2))
     real_time <- time[which_cells]
 
     res_all[[i]] = list("final_lambda" = as.numeric(final_lambda),

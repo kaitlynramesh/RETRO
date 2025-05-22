@@ -8,10 +8,10 @@
 
 # Determine number of PCs that make up 90% variance
 num_pc <- function(pca) {
-  n_pc <- 1:ncol(pca$x) # total pca
+  n_pc <- seq_along(ncol(pca$x)) # total pca
 
   eig <- pca$sdev ** 2
-  contribution <- 1:length(n_pc)
+  contribution <- seq_along(n_pc)
   contribution[1] <- eig[1]
   for (i in 2:ncol(pca$x)) {
     contribution[i] <- (contribution[i-1] + eig[i])
@@ -60,14 +60,14 @@ pc_distance_function <- function(time,
 
   # PCs that contribute to 90% (default) of the variance in the data
   n_pc <- num_pc(pca)
-  pc_sdev <- pca$sdev[1:n_pc]
+  pc_sdev <- pca$sdev[seq(n_pc)]
 
   # PC values weighted by their variance
-  pc_weighted <- apply(pca$x[,1:n_pc], 1, function(x) pc_sdev*x)
+  pc_weighted <- apply(pca$x[,seq(n_pc)], 1, function(x) pc_sdev*x)
 
   pc_weighted <- t(pc_weighted)
-  colnames(pc_weighted) <- colnames(pca$x[,1:n_pc])
-  rownames(pc_weighted) <- rownames(pca$x[,1:n_pc])
+  colnames(pc_weighted) <- colnames(pca$x[,seq(n_pc)])
+  rownames(pc_weighted) <- rownames(pca$x[,seq(n_pc)])
 
   # PCA distance matrix to calculate median distance between PC values
   pc_mat <- as.matrix(dist(pc_weighted))
@@ -129,12 +129,12 @@ weight_coord <- function(eset, weight) {
 get_cluster_time <- function(clusterLabels, time, terminal_cells=NULL,
                              starting_cells=NULL, threshold=0.10, max_k) {
 
-  id <- 1:length(clusterLabels)
+  id <- seq_along(clusterLabels)
   v <- as.data.frame(cbind(id, clusterLabels, time))
   v <- v[order(clusterLabels),]
   v <-split(v, v$clusterLabels)
-  av_time <- 1:length(v)
-  mode_time <- 1:length(v)
+  av_time <- seq_along(v)
+  mode_time <- seq_along(v)
   final_time <- max(time) # assume that terminal clusters are present at LAST TIME
 
   k <- length(unique(clusterLabels))
@@ -170,7 +170,7 @@ get_cluster_time <- function(clusterLabels, time, terminal_cells=NULL,
     start_id <- NULL
   }
 
-  for (i in 1:length(v)) {
+  for (i in seq_along(v)) {
     t <- v[[i]]$time
     o <- match(t, sort(unique(time))) # order
     av_time[i] <- mean(o) # pseudo-average time
@@ -236,7 +236,7 @@ create_dMST <- function(retro_obj, kmedoids) {
   medoids <- coordinates[id,]
 
   k <- length(id)
-  nodes <- 1:k # node IDs
+  nodes <- seq(k) # node IDs
 
   # Identify starting cluster and terminal cluster
   if(!isempty(starting_cells)) {
@@ -253,7 +253,7 @@ create_dMST <- function(retro_obj, kmedoids) {
 
   # Distance matrix for cluster centers
   mat <- as.matrix(dist(medoids))
-  rownames(mat) <- colnames(mat) <- 1:length(id)
+  rownames(mat) <- colnames(mat) <- seq_along(id)
 
   # Set up for minimum spanning tree
   g <- graph.adjacency(mat, mode = "undirected", weighted = TRUE)
@@ -290,7 +290,7 @@ create_dMST <- function(retro_obj, kmedoids) {
     node_edges <- edge_list[c(which(edge_list[,1] %in% node),
                               which(edge_list[,2] %in% node)),]
 
-    node_edges <- lapply(1:nrow(node_edges), function(i) {
+    node_edges <- lapply(seq(nrow(node_edges)), function(i) {
       e <- as.numeric(node_edges[i,])
       dt_edge <- abs(av_time[e[1]]-av_time[e[2]]) # if ∆t is TOO far, remove edge
       e <- c(e, dt_edge)
@@ -337,7 +337,7 @@ create_dMST <- function(retro_obj, kmedoids) {
 
   path_list <- vector(mode='list', length=length(paths))
   names(path_list) <- paste(seq_len(length(paths)))
-  for (i in 1:length(paths)) {
+  for (i in seq_along(paths)) {
     path_list[[i]] <- paths[[i]]
   }
 
@@ -363,7 +363,7 @@ filter_lineages <- function(lineages) {
   l <- lapply(lineages, as.vector)
   x <- lapply(l, length)
 
-  r <- lapply(seq(l), function(i) lapply(1:nl, function(j)
+  r <- lapply(seq(l), function(i) lapply(seq(nl), function(j)
     sum((l[[j]] %in% l[[i]]))))
   r <- lapply(seq(r), function(i) which(r[[i]]==x[[i]]))
   repeated <- which(unlist(lapply(r, length)) > 1)

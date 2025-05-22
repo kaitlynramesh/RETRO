@@ -15,7 +15,7 @@
 # Creates data frame of center coordinates (df) in order of MST
 get_mst_coord <- function(lineage, center_coord) {
   mstc <- data.frame()               # Start w/ empty data frame
-  for (i in 1:length(lineage)) {
+  for (i in seq_along(lineage)) {
     x1 <- center_coord[lineage[[i]], 1] # Finds (x,y) for each center
     y1 <- center_coord[lineage[[i]], 2]
     c <- c(x1, y1)
@@ -27,8 +27,8 @@ get_mst_coord <- function(lineage, center_coord) {
 
 # Creates line segments to connect centers for plotting MST
 connect_clus <- function(b, mstc) {
-  for (i in 1:length(mstc)) { # Operates on each lineage identified
-    for (j in 1:(length(mstc[[i]][["x"]])-1)) { # excessive indexing due to "list" object
+  for (i in seq_along(mstc)) { # Operates on each lineage identified
+    for (j in seq_along(length(mstc[[i]][["x"]])-1)) { # excessive indexing due to "list" object
       b <- b + geom_segment(x=mstc[[i]][["x"]][[j]],
                             y=mstc[[i]][["y"]][[j]],
                             xend=mstc[[i]][["x"]][[j+1]],
@@ -56,11 +56,11 @@ boxplot_scoring <- function(retro_obj) {
   num_scores = length(all_scores[[1]])
   k_range = retro_obj@k_range
 
-  kscoring <- lapply(all_scores, function(x) sapply(x, "[[", 2))
+  kscoring <- lapply(all_scores, function(x) vapply(x, "[[", 2))
   score_df <- unlist(rbind(as.data.frame(kscoring)))
-  num_k <- unlist(lapply(1:length(k_range), function(i) rep(k_range[i], num_scores)))
+  num_k <- unlist(lapply(seq_along(k_range), function(i) rep(k_range[i], num_scores)))
   score_df <- data.frame(cbind(unlist(score_df), num_k))
-  rownames(score_df) <- 1:(num_scores * length(k_range))
+  rownames(score_df) <- seq(num_scores * length(k_range))
   colnames(score_df) <- c('Score', 'K')
   score_df$K <- as.factor(score_df$K)
   ggplot(score_df, aes(x=.data$K, y=.data$Score)) +
@@ -85,7 +85,7 @@ boxplot_scoring <- function(retro_obj) {
 #' @export
 #'
 #'
-pseudotime_density <- function(time, pseudotime, bw=0.5, log1p=F) {
+pseudotime_density <- function(time, pseudotime, bw=0.5, log1p=FALSE) {
 
   time = as.numeric(time)
   pseudotime = as.numeric(pseudotime)
@@ -156,7 +156,7 @@ pseudotime_density <- function(time, pseudotime, bw=0.5, log1p=F) {
       fill = "Time"
     )
 
-  if(log1p=="T") {
+  if(log1p) {
     density_obj = density_obj + scale_y_continuous(trans = 'log1p') + labs(y="Log-normalized Density")
   }
 

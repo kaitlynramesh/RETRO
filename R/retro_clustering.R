@@ -32,7 +32,7 @@ kmnn_cluster <- function(coordinates, num_centers) {
   centroids = res$centers
   clusterLabels = as.factor(res$cluster)
 
-  nearest_cells <- sapply(1:num_centers, function(i) find_nearest_cell(centroids[i,], coordinates))
+  nearest_cells <- vapply(1:num_centers, function(i) find_nearest_cell(centroids[i,], coordinates))
   nearest_cells = as.numeric(nearest_cells)
 
   levels(clusterLabels) = nearest_cells
@@ -61,7 +61,7 @@ recluster <- function(kmnn, time, coordinates, period) {
 
   clusterLabels <- kmnn[["clustering"]]
   bandwidth <- density(time)$bw
-  id <- 1:length(clusterLabels)
+  id <- seq_along(clusterLabels)
   v <- as.data.frame(cbind(id, clusterLabels, time))
   v <- v[order(clusterLabels),]
   v <-split(v, v$clusterLabels)
@@ -71,9 +71,9 @@ recluster <- function(kmnn, time, coordinates, period) {
   peak_storage <- vector(mode='list', length=length(v))
 
   new_peaks <- prev_peaks
-  names(prev_peaks) <- 1:length(v)
+  names(prev_peaks) <- seq_along(v)
 
-  for (i in 1:length(v)) {
+  for (i in seq_along(v)) {
     t <- v[[i]]$time
     o <- match(t, sort(unique(time))) # using ORDER for density plot
 
@@ -136,7 +136,7 @@ recluster <- function(kmnn, time, coordinates, period) {
         t_groups <- t_groups[!unlist(lapply(t_groups, isempty))]
 
         # prevent groups containing JUST 1 cell (at least 2)
-        check_length <- lapply(1:length(t_groups), function(n) {
+        check_length <- lapply(seq_along(t_groups), function(n) {
           l <- if(length(t_groups[[n]])==1 & !isempty(t_groups[[n]])) {n}
           return(l)
         })
@@ -208,7 +208,7 @@ recluster <- function(kmnn, time, coordinates, period) {
   if(!isempty(sep_cycles)) { # if cycles are detected post-period
 
     # determine dt between average time-points in respective cycles
-    cycle_dt <- unlist(lapply(1:length(sep_cycles), function(i)
+    cycle_dt <- unlist(lapply(seq_along(sep_cycles), function(i)
       mean(abs(apply(sep_cycles[[i]], 1, diff)))))
 
     cycle_dt <- min(ceiling(cycle_dt)) / 2 # ceiling to be conservative
@@ -225,7 +225,7 @@ recluster <- function(kmnn, time, coordinates, period) {
   }
 
   clusterLabels <- 1:nrow(coordinates)
-  for (i in 1:length(all_peaks)) {
+  for (i in seq_along(all_peaks)) {
     clusterLabels[all_peaks[[i]]] <- as.numeric(names(all_peaks)[i])
   }
   return(list(clusterLabels, cycle_dt, period))
