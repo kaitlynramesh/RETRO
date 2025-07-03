@@ -1,0 +1,140 @@
+---
+title: "Working with cyclic trajectories"
+author: "Kaitlyn Ramesh"
+affiliation: "Northeastern University"
+date: "April 25, 2025"
+output: 
+  rmarkdown::html_document:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{Working with cyclic trajectories}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## 1. Overview
+In this vignette, we will discuss how RETRO can help infer pseudotime for single-cell RNA-seq datasets with oscillating gene expression patterns. Due to its use of sampling time, trajectory inference with RETRO correctly orders cells3 that return to an earlier state.
+
+## 2. Analysis
+```{r}
+library(RETRO)
+
+# Additional packages for vignette 
+library(Biobase) # data storage + processing
+library(ggplot2) # plotting
+library(ggpubr) # plotting
+library(doParallel)
+library(parallel)
+```
+
+### 2.1 Preprocessed data
+```{r}
+cyclic_url = "https://raw.githubusercontent.com/kaitlynramesh/RETRO-data/main/synthetic/scd_twocycles.rds"
+scd_twocycles = readRDS(gzcon(url(cyclic_url)))
+```
+
+### 2.2 Dimensionality reduction
+```{r}
+# PCA analysis
+pca = experimentData(scd_twocycles)@other$PCA
+
+time = phenoData(scd_twocycles)@data[["time"]] 
+time_label = as.factor(time) # factor for coloring
+ggplot(as.data.frame(pca$x), aes(x=PC1,y=PC2,colour=time_label)) + geom_point() + theme_bw()
+```
+
+## 3. RETRO
+
+### 3.1 Path detection
+- same weight coord approach
+- need to cluster indiscriminately to cover entire projection
+- lambda = 1 will incorporate time information for path detection
+#### 3.1.1 Integrating gene expression and time information in distance
+```{r}
+lambda = 1
+
+coordinates <- weight_coord(scd_twocycles, weight = lambda)
+coordinates_uw <- weight_coord(scd_twocycles, weight = 0)
+```
+
+#### 3.1.2 Re-clustering to separate cycles
+- specify period!!!!
+```{r}
+k_range = seq(9,14) # set range of clusters 
+num_scores = 20
+period = 4
+
+retro_obj = set_RETRO_class(coordinates=coordinates,
+                            coordinates_uw=coordinates_uw,
+                            k_range=k_range,
+                            time=time,
+                            period=period)
+```
+
+#### 3.1.3 Iteratively scoring MSTs
+```{r}
+if (!interactive()) {
+  foreach::registerDoSEQ()
+} else {
+  ncores = parallel::detectCores()
+  registerDoParallel(cores = ncores)
+}
+retro_obj = scoring(retro_obj, k_range, num_scores)
+
+boxplot_scoring(retro_obj) # visualization distribution of score over K clusters
+```
+
+#### 3.1.4 Determine consensus number of lineages
+- should be 1 lineage, so not heatmap is plotted (all cells map to 1 lineage)
+```{r}
+retro_obj <- get_num_lineages(retro_obj, percent=0.1) 
+```
+
+### 3.2 Pseudotime estimation 
+#### 3.2.1 Spline fitting
+```{r}
+retro_obj <- get_bezier_curve(retro_obj)
+retro_obj <- get_mapped_cells(retro_obj) # map any left over cells to lineage
+```
+
+#### 3.2.2 Fitting real time-calibrated pseudotime
+```{r}
+retro_obj = pseudotime_fit(retro_obj)
+
+cyclic_lineage = retro_obj@pseudotime_graph[[1]]
+cyclic_lineage
+```
+
+### 3.3 Pseudotime visualization
+- can visualize inferred pseudotime like normal 
+#### 3.3.1 Heatmap
+```{r}
+coordinates = retro_obj@coordinates
+pseudotime = retro_obj@pseudotime
+curve = retro_obj@RETRO_Curve[[1]][["Full_Curve"]] # curve data points
+
+ggplot(as.data.frame(coordinates), aes(x=PC1, y=PC2, colour=pseudotime)) +
+  geom_point() +
+  scale_colour_continuous(low="blue", high="orange") +
+  geom_point(data = as.data.frame(curve[,1:2]), aes(x = V1, y = V2), size=0.5, colour='black') +
+  theme_bw()
+```
+
+#### 3.3.2 Density plot
+```{r}
+pseudotime_density(time, pseudotime)
+```
+
+
+## 4. Session info
+```{r}
+sessionInfo()
+```
+

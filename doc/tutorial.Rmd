@@ -1,0 +1,175 @@
+---
+title: "An introduction to RETRO"
+author: "Kaitlyn Ramesh"
+affiliation: "Northeastern University"
+date: "April 25, 2025"
+output: 
+  rmarkdown::html_document:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{An introduction to RETRO}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## 1. Overview
+In this vignette, we will discuss how to use the package RETRO to infer the pseudotime for simulated time-series scRNA-seq data. RETRO provides a workflow for incorporating sampling time in trajectory inference such that the outputted pseudotime is consistent with the dynamics of cellular transitions. We will also show how RETRO allows for capturing both branching and cyclic trajectories.
+
+## 2. Analysis
+```{r}
+library(RETRO)
+```
+We will make use of a few packages for plotting (`ggpubr`, `ggplot2`) to aid in visualization, as well as packages for parallelization (`doParallel`, `parallel`) to expedite steps in RETRO.
+```{r}
+library(Biobase) # data processing + extraction
+library(ggplot2) # plotting
+library(ggpubr) # plotting
+library(doParallel)
+library(parallel)
+```
+
+### 2.1 Preprocessed data
+```{r}
+# Example 1: Bifurcating lineages
+bifurcation_url = "https://raw.githubusercontent.com/kaitlynramesh/RETRO-data/main/synthetic/scd_bifurcation.rds"
+scd_bifurcation = readRDS(gzcon(url(bifurcation_url)))
+
+# Time information (example 1 bifurcation)
+time = phenoData(scd_bifurcation)@data[["time"]]
+print(sort(unique(time)))
+```
+
+We will be looking at two examples of time-series scRNA-seq in this tutorial, both simulated cases generated using the `dyntoy` library from dynverse. The first example is a bifurcation where a starting population of cells splits into two terminal cell types. 
+
+### 2.2 Dimensionality reduction
+```{r}
+# PCA object
+pca = experimentData(scd_bifurcation)@other[["PCA"]]
+
+time_label = as.factor(time) # factor for coloring
+ggplot(as.data.frame(pca$x), aes(x=PC1,y=PC2,colour=time_label)) + geom_point() + theme_bw()
+```
+
+We will use PCA for dimensionality reduction. We recommend linear methods for dimensionality reduction although RETRO is compatible with UMAP coordinates as an input. 
+
+## 3. RETRO
+RETRO path detection starts by concatenating weighted time information to the coordinates determined using dimensionality reduction methods. There are two versions of coordinates used. If the parameter `weight > 0`, then there is a equal contribution from time and gene expression in this concatenated time vector. We can increase `weight` to increase contribution from the sampling time. We use `coordinates_uw` where `weight = 0` for clustering since on a matrix of coordinates without time information, we can ensure that the initial set of MST nodes covers the entire set of coordinates. 
+<br>
+The parameter range `k_range` is important for generating a wide variety of clustering results. We recommend that the range starts around the number of time-points in the data and includes at least 6 values for MST generation.  
+
+### 3.1 Path detection
+#### 3.1.1 Integrating gene expression and time information in distance
+```{r}
+lambda = 1
+
+coordinates <- weight_coord(scd_bifurcation, weight = lambda)
+coordinates_uw <- weight_coord(scd_bifurcation, weight = 0)
+```
+
+#### 3.1.2 Iterative clustering to identify global lineages
+We start off analysis with RETRO by creating `retro_obj`, which stores the coordinate information, sampling time. We also set the desired cluster range 
+`k_range`. For each K, we iteratively cluster the cells a number of times set by the parameter `num_scores`. By default it is ~100, but for the purposes of this vignette, we will limit the runs to 20. 
+<br>
+Using `set_RETRO_class()`, we establish an RETRO object `retro_obj`, which is important for storing parameters, inputs, intermediates, and outputs all involved in conducting pseudotime analysis with RETRO.
+```{r}
+k_range = seq(9,14) # set range of clusters 
+num_scores = 20
+
+retro_obj = set_RETRO_class(coordinates=coordinates,
+                            coordinates_uw=coordinates_uw,
+                            k_range = k_range,
+                            time=time)
+
+if (!interactive()) {
+  foreach::registerDoSEQ()
+} else {
+  ncores = parallel::detectCores()
+  registerDoParallel(cores = ncores)
+}
+retro_obj = scoring(retro_obj, k_range, num_scores)
+```
+
+#### 3.1.3 Visualize distribution of scores over K clusters
+Here, we can visualize results from the MST generation and scoring steps. We can see that with more clusters, the score decreases, indicating that the MSTs fit closer along the projection of cells. This makes sense as for this bifurcating structure, more clusters will increase the resolution of the MST structure. 
+```{r}
+boxplot_scoring(retro_obj)
+```
+
+#### 3.1.4 Identify global lineages across the ensemble of MSTs
+`get_num_lineages()` is important for inferring the global trajectories underlying the data based on results of the iterative clustering and MST generation steps. The parameter `percent` is default at 0.05 to select the top 5% of high performing MSTs to determine the optimal number of lineages, as well as group cells based on their lineage. Because `num_scores` is low, we will select the top 10% of MSTs (`percent = 0.1`) for analysis.
+```{r}
+retro_obj <- get_num_lineages(retro_obj, percent=0.05) 
+```
+
+### 3.2 Pseudotime estimation 
+#### 3.2.1 Spline fitting
+We use `get_bezier_curve()` to create smooth curves through the optimal MST. Here, we fit cubic Bézier curves between adjacent nodes of the trajectory. These smooth curves will be used for calculating arc length, which is the precursor to RETRO pseudotime values. 
+```{r}
+retro_obj <- get_bezier_curve(retro_obj)
+```
+
+We also need to ensure that all cells are mapped to the inferred lineages from the dataset. We can plot these cells in `retro_obj@cells_to_lin` where cells are either specific to or shared between the two lineages in the bifurcation. Cells in shared regions could demonstrate characteristics like pluripotency.
+```{r}
+retro_obj <- get_mapped_cells(retro_obj)
+
+cells_to_lin1 = retro_obj@cells_to_lin[[1]]
+cells_to_lin2 = retro_obj@cells_to_lin[[2]]
+
+lineage_1 = ggplot(as.data.frame(coordinates), aes(x=PC1, y=PC2)) +
+  geom_point() +
+  geom_point(data = as.data.frame(cells_to_lin1[,1:2]), aes(x = PC1, y = PC2), colour='#344AB0') +
+  theme_bw()
+
+lineage_2 = ggplot(as.data.frame(coordinates), aes(x=PC1, y=PC2)) +
+  geom_point() +
+  geom_point(data = as.data.frame(cells_to_lin2[,1:2]), aes(x = PC1, y = PC2), colour='#FF69B4') +
+  theme_bw()
+
+ggarrange(lineage_1, lineage_2, ncol=2)
+```
+
+#### 3.2.2 Fitting real time-calibrated pseudotime
+We next project each cell to the smooth curve of their respective lineage to calculate cell-specific arc lengths. These arc length values are fit against the sampling time of  each cell. By calibrating arc length with real time, we extrapolate pseudotime values that are in the range of experimental time. We can see the intermediate fitting steps here for each lineage. The cells that are in >1 lineages will be assigned the average of their lineage-specific pseudotime values.
+```{r}
+retro_obj = pseudotime_fit(retro_obj)
+
+lin_1 = retro_obj@pseudotime_graph[[1]]
+lin_2 = retro_obj@pseudotime_graph[[2]]
+
+ggarrange(lin_1, lin_2, ncol=2)
+```
+
+### 3.3 Pseudotime visualization
+#### 3.3.1 Heatmap
+We can visualize these developmental trajectories in our simulated data by coloring each cell based on their assigned pseudotime value. Here, we see that the pseudotime ranges from t=0 to t=10 and is consistent with the direction of the known underlying bifurcation.
+```{r}
+coordinates = retro_obj@coordinates
+pseudotime = retro_obj@pseudotime
+curves = sapply(retro_obj@RETRO_Curve, "[", 1)
+
+ggplot(as.data.frame(coordinates), aes(x=PC1, y=PC2, colour=pseudotime)) +
+  geom_point() +
+  scale_colour_continuous(low="blue", high="orange") +
+  geom_point(data = as.data.frame(curves[[1]][,1:2]), aes(x = V1, y = V2), size=0.5, colour='black') +
+  geom_point(data = as.data.frame(curves[[2]][,1:2]), aes(x = V1, y = V2), size=0.5, colour='black') +
+  theme_bw()
+```
+
+#### 3.3.2 Density plot
+We can look more closely at changes in inferred pseudotime with respect to experimental time using a density plot. For this analysis, we plot the pseudotime distribution per discrete time point. We can see that pseudotime increases linearly from t=0 to t=10 and is aligned to its corresponding real time point. 
+```{r}
+pseudotime_density(time, pseudotime)
+```
+
+## 4. Session info
+```{r}
+sessionInfo()
+```
+
