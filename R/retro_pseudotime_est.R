@@ -39,8 +39,8 @@ pseudotime_fit <- function(retro_obj) {
   graph_list <- vector(mode='list', length=nl)
 
   # Obtain curve and arc length information
-  ext_bcurves <- vapply(retro_obj@RETRO_Curve, "[", 1)
-  arclengths <- vapply(retro_obj@RETRO_Curve, "[", 3)
+  ext_bcurves <- sapply(retro_obj@RETRO_Curve, "[", 1)
+  arclengths <- sapply(retro_obj@RETRO_Curve, "[", 3)
 
   # Initialize lists for storage
   pseudotime_list <- vector(mode='list', length=nl)
@@ -49,8 +49,8 @@ pseudotime_fit <- function(retro_obj) {
 
   # Obtain curve and arc length information
   retro_curve = retro_obj@RETRO_Curve
-  ext_bcurves <- vapply(retro_curve, "[", 1)
-  arclengths <- vapply(retro_curve, "[", 3)
+  ext_bcurves <- sapply(retro_curve, "[", 1)
+  arclengths <- sapply(retro_curve, "[", 3)
 
   # Project cells according to the corresponding MST segment
   projection_res = projection_by_segment(nl=nl,
@@ -62,9 +62,9 @@ pseudotime_fit <- function(retro_obj) {
                                          id=id, arclengths=arclengths,
                                          ext_bcurves=ext_bcurves)
 
-  lambda_per_lineage = vapply(projection_res, "[", "final_lambda")
-  time_per_lineage = vapply(projection_res, "[", "real_time")
-  which_cells = vapply(projection_res, "[", "which_cells")
+  lambda_per_lineage = sapply(projection_res, "[", "final_lambda")
+  time_per_lineage = sapply(projection_res, "[", "real_time")
+  which_cells = sapply(projection_res, "[", "which_cells")
 
   # Pseudotime-fitting per lineage (for cyclic/multifurcating lineages)
   for(i in seq(nl)) {
@@ -199,8 +199,8 @@ get_mapped_cells <- function(retro_obj) {
     })
     nearest_node = as.numeric(nearest_node)
 
-    nearest_lin <- vapply(nearest_node, function(x)
-      which(vapply(cluster_membership, function(y) x %in% y)))
+    nearest_lin <- sapply(nearest_node, function(x)
+      which(sapply(cluster_membership, function(y) x %in% y)))
 
     cluster_match_df = cbind(unmatched_clusters, nearest_node)
 
@@ -240,7 +240,7 @@ projection_by_segment <- function(nl, coordinates, time, lineages, lin_membershi
       nodes_to_match = lin_id[-which(lin_id %in% node_not_used)] # nodes in final lineage
       if(isempty(nodes_to_match)) { nodes_to_match = lin_id }
 
-      node_match = vapply(node_not_used, function(node) {
+      node_match = sapply(node_not_used, function(node) {
         coord1 = cbind(coordinates[,1:2], time)[node,]
         coord2 = cbind(coordinates[,1:2], time)[nodes_to_match,]
 
@@ -313,8 +313,8 @@ projection_by_segment <- function(nl, coordinates, time, lineages, lin_membershi
       return(list(ids, scaled_lambda))
     })
 
-    which_cells <- unlist(vapply(projection, "[", 1))
-    final_lambda <- unlist(vapply(projection, "[", 2))
+    which_cells <- unlist(sapply(projection, "[", 1))
+    final_lambda <- unlist(sapply(projection, "[", 2))
     real_time <- time[which_cells]
 
     res_all[[i]] = list("final_lambda" = as.numeric(final_lambda),

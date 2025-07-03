@@ -4,7 +4,7 @@
 \alias{pseudotime_density}
 \title{Pseudotime density plot}
 \usage{
-pseudotime_density(time, pseudotime, bw = 0.5, log1p = F)
+pseudotime_density(time, pseudotime, bw = 0.5, log1p = FALSE)
 }
 \arguments{
 \item{time}{Vector of experimental sampling time assigned to each cell.}

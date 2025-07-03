@@ -56,10 +56,10 @@ boxplot_scoring <- function(retro_obj) {
   num_scores = length(all_scores[[1]])
   k_range = retro_obj@k_range
 
-  kscoring <- lapply(all_scores, function(x) vapply(x, "[[", 2))
-  score_df <- unlist(rbind(as.data.frame(kscoring)))
+  score_values <- lapply(all_scores, function(x) sapply(x, "[[", 2))
+  # score_vec <- unlist(rbind(as.data.frame(score_values)))
   num_k <- unlist(lapply(seq_along(k_range), function(i) rep(k_range[i], num_scores)))
-  score_df <- data.frame(cbind(unlist(score_df), num_k))
+  score_df <- data.frame(cbind(unlist(score_values), num_k))
   rownames(score_df) <- seq(num_scores * length(k_range))
   colnames(score_df) <- c('Score', 'K')
   score_df$K <- as.factor(score_df$K)

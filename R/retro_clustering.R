@@ -4,9 +4,9 @@
 #'
 #'
 
-find_nearest_cell <- function(centroid, coordinates) {
+find_nearest_cell <- function(centroids, coordinates) {
   dims = c(1,2,ncol(coordinates))
-  centroid = centroid[dims]
+  centroid = centroids[dims]
 
   distances = apply(coordinates[,dims], 1, function(row) {
     return(as.numeric(dist(rbind(row, centroid)))) # use all dimensions!!
@@ -32,7 +32,7 @@ kmnn_cluster <- function(coordinates, num_centers) {
   centroids = res$centers
   clusterLabels = as.factor(res$cluster)
 
-  nearest_cells <- vapply(1:num_centers, function(i) find_nearest_cell(centroids[i,], coordinates))
+  nearest_cells <- sapply(1:num_centers, function(i) find_nearest_cell(centroids[i,], coordinates))
   nearest_cells = as.numeric(nearest_cells)
 
   levels(clusterLabels) = nearest_cells

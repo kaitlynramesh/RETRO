@@ -9,8 +9,8 @@
 
 # Organize scoring information and obtain membership matrices from the top-performing MSTs
 get_top_scores <- function(all_scores, num_scores, percent) {
-  s <- vapply(all_scores, "[")    # num_scores x k-possible matrix of data
-  s <- unlist(vapply(s, "[")[2,]) # Extract scores
+  s <- sapply(all_scores, "[")    # num_scores x k-possible matrix of data
+  s <- unlist(sapply(s, "[")[2,]) # Extract scores
   p <- percent * num_scores * length(all_scores)
   top_scores <- order(s)[seq(p)] # Identify  lowest scores
   clusn <- ifelse (top_scores %% num_scores == 0, top_scores / num_scores, floor(top_scores / num_scores) + 1)
@@ -53,7 +53,7 @@ get_lin_mem <- function(membership) {
   b <- lapply(seq(p2), function(i) {
     a <- x[which(nl_detected == i)] # Obtain lineages w/ "i" # of lineages
     for (j in seq(i)) {
-      df <- as.data.frame(vapply(a, "[", j,))
+      df <- as.data.frame(sapply(a, "[", j,))
       colnames(df) <- seq_len(ncol(df))
       b[[j]] <- df
       b[[j]] <- t(as.data.frame(do.call(rbind, b[[j]])))
@@ -62,7 +62,7 @@ get_lin_mem <- function(membership) {
   })
 
   all_membership <- unlist(b[unl], recursive = FALSE)
-  z <- which(vapply(lapply(all_membership, nrow), is.null)) # remove unused lineages
+  z <- which(sapply(lapply(all_membership, nrow), is.null)) # remove unused lineages
   all_membership <- if(isempty(z)) {
     do.call(cbind, all_membership)
   } else { do.call(cbind, all_membership[-z]) }
@@ -140,7 +140,7 @@ get_num_lineages <- function(retro_obj, percent=0.05, cutoff=0.8) {
   }
 
   # (4) Identify closest MST trajectory
-  closest_mst <- vapply(seq_along(membership), function(i) {
+  closest_mst <- sapply(seq_along(membership), function(i) {
     membership_t <- t(membership[[i]])
     nl_t = ncol(membership_t)
 
@@ -323,7 +323,7 @@ stitch_bezier_curves <- function(S, inc=.001) {
   arclength <- lapply(seq(num_curves), function(i) { bezierArcLength(ctrl_points[[i]][,1:2], t1=0, t2=1, deg=3) })
 
   bcurve <- do.call(rbind, piecewise_bezier)
-  arclength <- unlist(vapply(arclength, "[", 'arc.length'))
+  arclength <- unlist(sapply(arclength, "[", 'arc.length'))
 
   return(list(bcurve, ctrl_points, arclength))
 }

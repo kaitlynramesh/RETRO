@@ -1,6 +1,6 @@
 Package: RETRO
 Title: REal Time Referenced Ordering 
-Version: 0.0.0.9000
+Version: 1.0.0
 Authors@R: 
     person("Kaitlyn", "Ramesh",, "ramesh.ka@northeastern.edu", role = c("aut", "cre"))
 Description: What the package does (one paragraph).

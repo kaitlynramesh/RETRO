@@ -8,7 +8,7 @@
 
 # Determine number of PCs that make up 90% variance
 num_pc <- function(pca) {
-  n_pc <- seq_along(ncol(pca$x)) # total pca
+  n_pc <- seq_len(ncol(pca$x)) # total pca
 
   eig <- pca$sdev ** 2
   contribution <- seq_along(n_pc)

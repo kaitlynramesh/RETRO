@@ -123,7 +123,7 @@ curve = retro_obj@RETRO_Curve[[1]][["Full_Curve"]] # curve data points
 ggplot(as.data.frame(coordinates), aes(x=PC1, y=PC2, colour=pseudotime)) +
   geom_point() +
   scale_colour_continuous(low="blue", high="orange") +
-  geom_point(data = as.data.frame(curves[,1:2]), aes(x = V1, y = V2), size=0.5, colour='black') 
+  geom_point(data = as.data.frame(curve[,1:2]), aes(x = V1, y = V2), size=0.5, colour='black') +
   theme_bw()
 ```
 

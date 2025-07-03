@@ -39,9 +39,7 @@ library(parallel)
 ```{r}
 # Example 1: Bifurcating lineages
 bifurcation_url = "https://raw.githubusercontent.com/kaitlynramesh/RETRO-data/main/synthetic/scd_bifurcation.rds"
-
 scd_bifurcation = readRDS(gzcon(url(bifurcation_url)))
-##### <show where stuff is located> ###
 
 # Time information (example 1 bifurcation)
 time = phenoData(scd_bifurcation)@data[["time"]]
@@ -107,7 +105,7 @@ boxplot_scoring(retro_obj)
 #### 3.1.4 Identify global lineages across the ensemble of MSTs
 `get_num_lineages()` is important for inferring the global trajectories underlying the data based on results of the iterative clustering and MST generation steps. The parameter `percent` is default at 0.05 to select the top 5% of high performing MSTs to determine the optimal number of lineages, as well as group cells based on their lineage. Because `num_scores` is low, we will select the top 10% of MSTs (`percent = 0.1`) for analysis.
 ```{r}
-retro_obj <- get_num_lineages(retro_obj, percent=0.1) 
+retro_obj <- get_num_lineages(retro_obj, percent=0.05) 
 ```
 
 ### 3.2 Pseudotime estimation 
