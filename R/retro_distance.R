@@ -54,7 +54,6 @@ pc_distance_function <- function(time,
 
   # Time distance matrix to calculate mean time between cells
   tmat <- dist(time) # Euclidean
-  tmat <- as.matrix(tmat)
   tmat <- tmat**2 # difference squared
   mean_t <- mean(as.numeric(tmat))
 
@@ -70,7 +69,7 @@ pc_distance_function <- function(time,
   rownames(pc_weighted) <- rownames(pca$x[,seq(n_pc)])
 
   # PCA distance matrix to calculate median distance between PC values
-  pc_mat <- as.matrix(dist(pc_weighted))
+  pc_mat <- dist(pc_weighted)
   pc_mat <- pc_mat**2
   median_pc <- median(as.numeric((pc_mat)))
 
