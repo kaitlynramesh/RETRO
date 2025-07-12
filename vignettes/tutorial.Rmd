@@ -30,7 +30,7 @@ We will make use of a few packages for plotting (`ggpubr`, `ggplot2`) to aid in 
 ```{r}
 library(Biobase) # data processing + extraction
 library(ggplot2) # plotting
-library(ggpubr) # plotting
+library(patchwork) # plotting
 library(doParallel)
 library(parallel)
 ```
@@ -132,7 +132,7 @@ lineage_2 = ggplot(as.data.frame(coordinates), aes(x=PC1, y=PC2)) +
   geom_point(data = as.data.frame(cells_to_lin2[,1:2]), aes(x = PC1, y = PC2), colour='#FF69B4') +
   theme_bw()
 
-ggarrange(lineage_1, lineage_2, ncol=2)
+lineage_1 + lineage_2
 ```
 
 #### 3.2.2 Fitting real time-calibrated pseudotime
@@ -143,7 +143,7 @@ retro_obj = pseudotime_fit(retro_obj)
 lin_1 = retro_obj@pseudotime_graph[[1]]
 lin_2 = retro_obj@pseudotime_graph[[2]]
 
-ggarrange(lin_1, lin_2, ncol=2)
+lin_1 + lin_2
 ```
 
 ### 3.3 Pseudotime visualization

@@ -29,7 +29,6 @@ library(RETRO)
 # Additional packages for vignette 
 library(Biobase) # data storage + processing
 library(ggplot2) # plotting
-library(ggpubr) # plotting
 library(doParallel)
 library(parallel)
 ```

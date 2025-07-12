@@ -9,7 +9,7 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 Imports: Biobase, MonoPoly, RColorBrewer, bezier, cccd, cluster,
     doParallel, dplyr, foreach, ggplot2, igraph, magrittr,
-    pracma, princurve, stats, purrr, rlang, tidyr, methods, ggpubr, 
+    pracma, princurve, stats, purrr, rlang, tidyr, methods, patchwork, 
     parallel, utils, grDevices, proxy
 VignetteBuilder: knitr
 Suggests: knitr, rmarkdown
