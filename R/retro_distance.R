@@ -47,7 +47,7 @@ num_pc <- function(pca) {
 #' @export
 #'
 pc_distance_function <- function(time,
-                                 pca,
+                                 dimred, # PCA
                                  lambda=1) {
 
   time = as.integer(factor(time))
@@ -56,34 +56,47 @@ pc_distance_function <- function(time,
   tmat <- dist(time) # Euclidean
   tmat <- tmat**2 # difference squared
   mean_t <- mean(as.numeric(tmat))
+  
+  if(class(dimred) == "prcomp") { # for PCA 
+    
+    # PCs that contribute to 90% (default) of the variance in the data
+    n_pc <- num_pc(dimred)
+    pc_sdev <- dimred$sdev[seq(n_pc)]
+    
+    # PC values weighted by their variance
+    pc_weighted <- apply(dimred$x[,seq(n_pc)], 1, function(x) pc_sdev*x)
+    
+    pc_weighted <- t(pc_weighted)
+    colnames(pc_weighted) <- colnames(dimred$x[,seq(n_pc)])
+    rownames(pc_weighted) <- rownames(dimred$x[,seq(n_pc)])
+    
+    # PCA distance matrix to calculate median distance between PC values
+    pc_mat <- dist(pc_weighted)
+    pc_mat <- pc_mat**2
+    median_pc <- median(as.numeric((pc_mat)))
+    
+    # PC factor that can equate the mean time distance to distance between PCs
+    pc_factor <- median_pc / mean_t
+    weight <- sqrt(pc_factor * lambda)
+    
+    # Weighted PC and time-coordinate system for cells
+    coordinates <- cbind(pc_weighted, time * weight)
+  
+  } else {
+    
+    print("Not prcomp object / no PCA used")
+    coordinates = cbind(dimred, time * lambda)
+    pc_weighted = NULL
+    weight = lambda
 
-  # PCs that contribute to 90% (default) of the variance in the data
-  n_pc <- num_pc(pca)
-  pc_sdev <- pca$sdev[seq(n_pc)]
-
-  # PC values weighted by their variance
-  pc_weighted <- apply(pca$x[,seq(n_pc)], 1, function(x) pc_sdev*x)
-
-  pc_weighted <- t(pc_weighted)
-  colnames(pc_weighted) <- colnames(pca$x[,seq(n_pc)])
-  rownames(pc_weighted) <- rownames(pca$x[,seq(n_pc)])
-
-  # PCA distance matrix to calculate median distance between PC values
-  pc_mat <- dist(pc_weighted)
-  pc_mat <- pc_mat**2
-  median_pc <- median(as.numeric((pc_mat)))
-
-  # PC factor that can equate the mean time distance to distance between PCs
-  pc_factor <- median_pc / mean_t
-  weight <- sqrt(pc_factor * lambda)
-
-  # Weighted PC and time-coordinate system for cells
-  coordinates <- cbind(pc_weighted, time * weight)
-
+  }
+  
   return (list('Coordinates' = coordinates,
                'Weighted_PC' = pc_weighted,
                'Time_Weight' = weight))
 }
+
+
 
 #' @title Defining cell coordinates using gene expression and time
 #' @description This function is a wrapper for the function \code{pc_distance_function()}.
