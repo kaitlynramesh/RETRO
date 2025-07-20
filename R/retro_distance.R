@@ -57,7 +57,7 @@ pc_distance_function <- function(time,
   tmat <- tmat**2 # difference squared
   mean_t <- mean(as.numeric(tmat))
   
-  if(class(dimred) == "prcomp") { # for PCA 
+  if(names(dimred) == "PCA") { # checking if PCA 
     
     # PCs that contribute to 90% (default) of the variance in the data
     n_pc <- num_pc(dimred)
@@ -112,7 +112,7 @@ pc_distance_function <- function(time,
 weight_coord <- function(eset, weight) {
 
   time = phenoData(eset)@data[["time"]]
-  dimred = experimentData(eset)@other[[1]] # either PCA or UMAP (preferably PCA)
+  dimred = experimentData(eset)@other # either PCA or UMAP (preferably PCA)
 
   mat_list <- pc_distance_function(time, dimred, weight)
   coordinates <- mat_list$Coordinates
