@@ -9,7 +9,8 @@ from the Lu Lab @ Northeastern University (https://lusystemsbio.northeastern.edu
 
 ## Installation
 ```
-tbd
+install.packages("remotes") 
+remotes::install_github("kaitlynramesh/RETRO")
 ```
 
 ## Tutorial
