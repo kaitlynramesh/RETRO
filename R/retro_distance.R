@@ -39,7 +39,7 @@ num_pc <- function(pca) {
 #' @title Defining cell coordinates using gene expression and time
 #' @description This function concatenates weighted time points to PCA coordinates.
 #' @param time Vector of sampling time points corresponding to each cell.
-#' @param pca List containing PCA information from \code{prcomp()}.
+#' @param dimred Dimensionality reduction data (ideally from \code{prcomp()}).
 #' @param lambda A numerical value indicating contribution from PCA for scaling the \code{time} vector.
 #' Default value is 1 (where PCA and time have an equal contribution). Increasing lambda will increase contribution from PCA.
 #' @return List containing weighted coordinates, PCA coordinates weighted by their variance,
@@ -47,7 +47,7 @@ num_pc <- function(pca) {
 #' @export
 #'
 pc_distance_function <- function(time,
-                                 dimred, # PCA
+                                 dimred, # PCA or UMAP
                                  lambda=1) {
 
   time = as.integer(factor(time))
@@ -101,7 +101,7 @@ pc_distance_function <- function(time,
 #' @title Defining cell coordinates using gene expression and time
 #' @description This function is a wrapper for the function \code{pc_distance_function()}.
 #'
-#' @param eset Biobase ExpressionSet object that contains PCA information `experimentData(eset)@other[["PCA"]]`
+#' @param eset Biobase ExpressionSet object that contains dimensionality reduction `experimentData(eset)@other[[1]]`
 #' and sampling time information `phenoData(scd_bifurcation)@data[["time"]]`.
 #' @param weight A numerical value indicating contribution from PCA for scaling the \code{time} vector.
 #' Default value is 1 (where PCA and time have an equal contribution). Increasing lambda will increase contribution from PCA.
@@ -110,12 +110,11 @@ pc_distance_function <- function(time,
 #'
 # Weight coordinates using distance functions.
 weight_coord <- function(eset, weight) {
-  # time <- as.numeric(scdata$Time)
-  # pca <- scdata$PCA
-  time = phenoData(eset)@data[["time"]]
-  pca = experimentData(eset)@other[["PCA"]]
 
-  mat_list <- pc_distance_function(time, pca, weight)
+  time = phenoData(eset)@data[["time"]]
+  dimred = experimentData(eset)@other[[1]] # either PCA or UMAP (preferably PCA)
+
+  mat_list <- pc_distance_function(time, dimred, weight)
   coordinates <- mat_list$Coordinates
   return(coordinates)
 }
