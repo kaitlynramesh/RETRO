@@ -60,15 +60,16 @@ pc_distance_function <- function(time,
   if(names(dimred) == "PCA") { # checking if PCA 
     
     # PCs that contribute to 90% (default) of the variance in the data
-    n_pc <- num_pc(dimred)
-    pc_sdev <- dimred$sdev[seq(n_pc)]
+    pca = dimred[["PCA"]] # prcomp object
+    n_pc <- num_pc(pca)
+    pc_sdev <- pca$sdev[seq(n_pc)]
     
     # PC values weighted by their variance
-    pc_weighted <- apply(dimred$x[,seq(n_pc)], 1, function(x) pc_sdev*x)
+    pc_weighted <- apply(pca$x[,seq(n_pc)], 1, function(x) pc_sdev*x)
     
     pc_weighted <- t(pc_weighted)
-    colnames(pc_weighted) <- colnames(dimred$x[,seq(n_pc)])
-    rownames(pc_weighted) <- rownames(dimred$x[,seq(n_pc)])
+    colnames(pc_weighted) <- colnames(pca$x[,seq(n_pc)])
+    rownames(pc_weighted) <- rownames(pca$x[,seq(n_pc)])
     
     # PCA distance matrix to calculate median distance between PC values
     pc_mat <- dist(pc_weighted)
@@ -85,7 +86,7 @@ pc_distance_function <- function(time,
   } else {
     
     print("Not prcomp object / no PCA used")
-    coordinates = cbind(dimred, time * lambda)
+    coordinates = cbind(dimred[[1]], time * lambda)
     pc_weighted = NULL
     weight = lambda
 
