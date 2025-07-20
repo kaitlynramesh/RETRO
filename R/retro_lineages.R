@@ -87,6 +87,7 @@ get_lin_mem <- function(membership) {
 # Determines # of Lineages (Heatmap) and Cell Membership to Each Lineage
 get_num_lineages <- function(retro_obj, percent=0.05, cutoff=0.8) {
 
+  coordinates <- retro_obj@coordinates # coordinates
   all_k <- retro_obj@all_k # clustering information
   all_scores <- retro_obj@all_scores # scoring information
   threshold <- retro_obj@threshold # threshold used for terminal cluster specification
