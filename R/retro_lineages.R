@@ -268,14 +268,14 @@ get_bezier_curve <- function(retro_obj, extension=2) {
     ext_b <- stitch_bezier_curves(centroids.2)[[1]] # Obtains data points for EXTENDED Bezier curves
     path_b <- stitch_bezier_curves(centroids) # Obtain data points for regular Bezier curves
     arclength <- path_b[[3]]
-    # path_b <- path_b[[1]]
+    path_b <- path_b[[1]]
 
     sl <- norm(c(extreme_centers[1,1:2]-centroids[1,1:2]), type='2') # making this edit given myo5 compressed pt
     fl <- norm(c(extreme_centers[2,1:2]-centroids[nrow(centroids),1:2]), type='2')
     arclength <- c(sl, arclength, fl)
 
-    return(list("Full_Curve" = ext_b, # only save extended Bézier spline
-                "Centroids" = centroids,
+    return(list("Extended_Curve" = ext_b, # only save extended Bézier spline
+                "Full_Curve" = path_b,
                 "Arc_Length" = arclength))
   })
 
