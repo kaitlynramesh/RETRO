@@ -36,8 +36,9 @@
 #' @slot RETRO_Curve List of curve information stored in \code{retro_obj@RETRO_Curve}.
 #' Its elements are the smoothed Bézier curves, MST centroids, and vector of
 #' arc lengths between each pair of nodes.
-#' @slot pseudotime_graph !!! include description here
-#' @slot pseudotime !!!! include description here
+#' @slot pseudotime_graph List of ggplot graphs visualizing arc length along real time 
+#' @slot arc_length List of arc length information used to track cell's position along trajectory 
+#' @slot pseudotime Vector of estimated pseudotime values. 
 #'
 #' @return An object of class \code{RETRO}
 #'
@@ -60,6 +61,7 @@ set_RETRO_class <- setClass("RETRO", slots=c(coordinates="matrix",
                                              RETRO_MST = "list",
                                              RETRO_Curve = "list",
                                              pseudotime_graph = "list",
+                                             arc_lenth = "list",
                                              pseudotime = "numeric"),
                             prototype=list(threshold=0.1,
                                            start = "Mode",

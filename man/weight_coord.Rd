@@ -7,7 +7,7 @@
 weight_coord(eset, weight)
 }
 \arguments{
-\item{eset}{Biobase ExpressionSet object that contains PCA information \code{experimentData(eset)@other[["PCA"]]}
+\item{eset}{Biobase ExpressionSet object that contains dimensionality reduction \code{experimentData(eset)@other[[1]]}
 and sampling time information \code{phenoData(scd_bifurcation)@data[["time"]]}.}
 
 \item{weight}{A numerical value indicating contribution from PCA for scaling the \code{time} vector.

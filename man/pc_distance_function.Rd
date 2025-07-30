@@ -4,12 +4,12 @@
 \alias{pc_distance_function}
 \title{Defining cell coordinates using gene expression and time}
 \usage{
-pc_distance_function(time, pca, lambda = 1)
+pc_distance_function(time, dimred, lambda = 1)
 }
 \arguments{
 \item{time}{Vector of sampling time points corresponding to each cell.}
 
-\item{pca}{List containing PCA information from \code{prcomp()}.}
+\item{dimred}{Dimensionality reduction data (ideally from \code{prcomp()}).}
 
 \item{lambda}{A numerical value indicating contribution from PCA for scaling the \code{time} vector.
 Default value is 1 (where PCA and time have an equal contribution). Increasing lambda will increase contribution from PCA.}
