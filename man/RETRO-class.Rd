@@ -62,8 +62,10 @@ about the optimal MST used for curve fitting.}
 Its elements are the smoothed Bézier curves, MST centroids, and vector of
 arc lengths between each pair of nodes.}
 
-\item{\code{pseudotime_graph}}{!!! include description here}
+\item{\code{pseudotime_graph}}{List of ggplot graphs visualizing arc length along real time}
 
-\item{\code{pseudotime}}{!!!! include description here}
+\item{\code{arc_length}}{List of arc length information used to track cell's position along trajectory}
+
+\item{\code{pseudotime}}{Vector of estimated pseudotime values.}
 }}
 

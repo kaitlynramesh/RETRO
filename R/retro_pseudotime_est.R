@@ -103,9 +103,8 @@ pseudotime_fit <- function(retro_obj) {
   }
 
   retro_obj@pseudotime_graph = graph_list
+  retro_obj@arc_length = lambda_list
   retro_obj@pseudotime = as.numeric(pseudotime)
-  # retro_pt_obj$Pseudotime_Mat = pseudotime_mat
-  # retro_pt_obj$Fitting <- lambda_list
 
   return(retro_obj)
 }
